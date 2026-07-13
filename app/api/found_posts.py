@@ -9,6 +9,7 @@ from ..utils import (
     current_user,
     is_owner_or_admin,
     page_args,
+    parse_category,
     parse_datetime,
     require_fields,
     success,
@@ -27,7 +28,6 @@ REQUIRED = [
 ]
 EDITABLE = {
     "title": "title",
-    "category": "category",
     "color": "color",
     "location": "location",
     "storageLocation": "storage_location",
@@ -52,7 +52,7 @@ def create_found_post():
         user_id=user.id,
         site_code=site_code,
         title=str(payload["title"]).strip(),
-        category=str(payload["category"]).strip().upper(),
+        category=parse_category(payload["category"]),
         color=str(payload["color"]).strip().upper(),
         location=str(payload["location"]).strip(),
         found_at=parse_datetime(payload["foundAt"], "foundAt"),
@@ -79,18 +79,23 @@ def list_found_posts():
     statement = db.select(FoundPost)
     requested_status = request.args.get("status")
     if user and user.role == "ADMIN" and requested_status:
-        statement = statement.where(FoundPost.status == requested_status.upper())
+        normalized_status = requested_status.upper()
+        if normalized_status not in {"STORED", "CLAIMED", "RETURNED", "CLOSED"}:
+            raise ApiError("VALIDATION_FAILED", "지원하지 않는 습득물 상태입니다.", 422)
+        statement = statement.where(FoundPost.status == normalized_status)
     else:
         statement = statement.where(FoundPost.status == "STORED")
     for param, column in {
         "siteCode": FoundPost.site_code,
-        "category": FoundPost.category,
         "location": FoundPost.location,
     }.items():
         value = request.args.get(param)
         if value:
             normalized = value if param == "location" else value.upper()
             statement = statement.where(column == normalized)
+    category = request.args.get("category")
+    if category:
+        statement = statement.where(FoundPost.category == parse_category(category))
     statement = statement.order_by(FoundPost.created_at.desc())
     pagination = db.paginate(statement, page=page, per_page=size, error_out=False)
     return success(
@@ -131,14 +136,18 @@ def update_found_post(post_id):
         if source in payload:
             setattr(post, target, payload[source] or None)
             needs_analysis = True
+    if "category" in payload:
+        post.category = parse_category(payload["category"])
+        needs_analysis = True
     if "foundAt" in payload:
         post.found_at = parse_datetime(payload["foundAt"], "foundAt")
         needs_analysis = True
     if "status" in payload:
         allowed = {"STORED", "CLOSED"}
-        if user.role != "ADMIN" or payload["status"] not in allowed:
+        status = str(payload["status"]).upper()
+        if user.role != "ADMIN" or status not in allowed:
             raise ApiError("INVALID_STATUS_TRANSITION", "허용되지 않은 상태입니다.", 409)
-        post.status = payload["status"]
+        post.status = status
     db.session.commit()
     if needs_analysis and post.status == "STORED":
         from ..tasks import analyze_found_post_task

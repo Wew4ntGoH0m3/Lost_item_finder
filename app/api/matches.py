@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required
 from ..errors import ApiError
 from ..extensions import db
 from ..models import FoundPost, LostPost, Match, utcnow
+from ..services.chat import ensure_chat_room
 from ..utils import body, current_user, is_owner_or_admin, require_fields, success
 
 bp = Blueprint("matches", __name__)
@@ -91,6 +92,7 @@ def claim_match(match_id):
     match.claimed_at = utcnow()
     match.lost_post.status = "MATCHED"
     match.found_post.status = "CLAIMED"
+    ensure_chat_room(match)
     db.session.commit()
     return success(match.to_dict(include_sensitive=True))
 

@@ -30,13 +30,11 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           password: ${{ secrets.EC2_PASSWORD }}
-          envs: POSTGRES_PASSWORD,SECRET_KEY,JWT_SECRET_KEY,LLM_API_KEY
-          script_stop: true
+          envs: POSTGRES_PASSWORD,SECRET_KEY,JWT_SECRET_KEY
           script: |
             set -eu
             DEPLOY_DIR="$HOME/Dorm_lost_item_finder"
@@ -57,9 +55,10 @@ jobs:
             POSTGRES_PORT=5433
             HTTP_PORT=80
             UPLOADS_PATH=/home/ec2-user/lostlink-uploads
-            LLM_API_KEY=$LLM_API_KEY
-            LLM_BASE_URL=https://api.openai.com/v1
-            LLM_MODEL=gpt-4.1-mini
+            OLLAMA_ENABLED=true
+            OLLAMA_BASE_URL=http://100.102.0.2:11434
+            OLLAMA_MODEL=qwen3:4b
+            OLLAMA_TIMEOUT_SECONDS=60
             EOF
             mkdir -p "$HOME/lostlink-uploads"
             EXISTING_PROJECT="$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' postgres 2>/dev/null || true)"

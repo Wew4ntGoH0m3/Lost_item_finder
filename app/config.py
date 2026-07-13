@@ -28,10 +28,11 @@ class Config:
     CELERY_TASK_EAGER_PROPAGATES = True
 
     REDIS_URL = os.getenv("REDIS_URL", "")
-    LLM_API_KEY = os.getenv("LLM_API_KEY", "")
-    LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1")
-    LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1-mini")
-    LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "20"))
+    SOCKET_CORS_ORIGINS = os.getenv("SOCKET_CORS_ORIGINS", "*")
+    OLLAMA_ENABLED = os.getenv("OLLAMA_ENABLED", "false").lower() == "true"
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
+    OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "60"))
     MATCH_MIN_SCORE = float(os.getenv("MATCH_MIN_SCORE", "50"))
     MATCH_NOTIFY_SCORE = float(os.getenv("MATCH_NOTIFY_SCORE", "85"))
     MATCH_CANDIDATE_LIMIT = int(os.getenv("MATCH_CANDIDATE_LIMIT", "100"))
@@ -44,4 +45,5 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
+    REDIS_URL = ""
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=5)

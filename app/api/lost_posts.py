@@ -9,6 +9,7 @@ from ..utils import (
     current_user,
     is_owner_or_admin,
     page_args,
+    parse_category,
     parse_datetime,
     require_fields,
     success,
@@ -26,7 +27,6 @@ REQUIRED = [
 ]
 EDITABLE = {
     "title": "title",
-    "category": "category",
     "color": "color",
     "location": "location",
     "features": "features",
@@ -51,7 +51,7 @@ def create_lost_post():
         user_id=user.id,
         site_code=site_code,
         title=str(payload["title"]).strip(),
-        category=str(payload["category"]).strip().upper(),
+        category=parse_category(payload["category"]),
         color=str(payload["color"]).strip().upper(),
         location=str(payload["location"]).strip(),
         lost_at=parse_datetime(payload["lostAt"], "lostAt"),
@@ -76,7 +76,6 @@ def list_lost_posts():
     statement = db.select(LostPost)
     for param, column in {
         "siteCode": LostPost.site_code,
-        "category": LostPost.category,
         "location": LostPost.location,
         "status": LostPost.status,
     }.items():
@@ -84,6 +83,9 @@ def list_lost_posts():
         if value:
             normalized = value if param == "location" else value.upper()
             statement = statement.where(column == normalized)
+    category = request.args.get("category")
+    if category:
+        statement = statement.where(LostPost.category == parse_category(category))
     statement = statement.order_by(LostPost.created_at.desc())
     pagination = db.paginate(statement, page=page, per_page=size, error_out=False)
     return success(
@@ -124,13 +126,17 @@ def update_lost_post(post_id):
         if source in payload:
             setattr(post, target, payload[source] or None)
             needs_analysis = needs_analysis or source != "contactMethod"
+    if "category" in payload:
+        post.category = parse_category(payload["category"])
+        needs_analysis = True
     if "lostAt" in payload:
         post.lost_at = parse_datetime(payload["lostAt"], "lostAt")
         needs_analysis = True
     if "status" in payload:
-        if payload["status"] not in {"OPEN", "CLOSED"}:
+        status = str(payload["status"]).upper()
+        if status not in {"OPEN", "CLOSED"}:
             raise ApiError("INVALID_STATUS_TRANSITION", "허용되지 않은 상태입니다.", 409)
-        post.status = payload["status"]
+        post.status = status
     db.session.commit()
     if needs_analysis and post.status == "OPEN":
         from ..tasks import analyze_lost_post_task

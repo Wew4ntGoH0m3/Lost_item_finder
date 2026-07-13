@@ -5,7 +5,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 from .errors import ApiError
 from .extensions import db
-from .models import User
+from .models import ItemCategory, User
 
 
 def success(data=None, status=200):
@@ -42,6 +42,19 @@ def parse_datetime(value: str, field: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
+
+
+def parse_category(value, field: str = "category") -> ItemCategory:
+    try:
+        return ItemCategory(str(value).strip().upper())
+    except (TypeError, ValueError) as exc:
+        allowed = [category.value for category in ItemCategory]
+        raise ApiError(
+            "INVALID_CATEGORY",
+            "지원하지 않는 카테고리 태그입니다.",
+            422,
+            [{"field": field, "reason": f"허용값: {', '.join(allowed)}"}],
+        ) from exc
 
 
 def current_user(optional: bool = False) -> User | None:

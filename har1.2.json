@@ -7,16 +7,16 @@
     },
     "pages": [
       {
-        "startedDateTime": "2026-07-13T04:40:00.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "id": "page_lostlink_flask_api",
-        "title": "LostLink Flask API",
+        "title": "LostLink Flask API with JWT and Socket.IO",
         "pageTimings": {}
       }
     ],
     "entries": [
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:00.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
@@ -56,12 +56,12 @@
           "receive": 0
         },
         "_name": "Health check",
-        "_description": "API and database-independent liveness check.",
+        "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:01.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -83,7 +83,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"email\":\"owner@example.com\",\"password\":\"Password123!\",\"nickname\":\"분실자\",\"siteCode\":\"SCHOOL_001\"}"
+            "text": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"StrongPass123!\",\n  \"nickname\": \"분실자\",\n  \"siteCode\": \"SCHOOL_001\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -108,13 +109,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Sign up",
-        "_description": "",
+        "_name": "Postman signup - owner",
+        "_description": "모바일 앱에서는 호출하지 않고 Postman으로 시연 계정을 생성합니다.",
         "_expectedStatus": 201
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:02.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -136,7 +137,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"email\":\"owner@example.com\",\"password\":\"Password123!\",\"device\":{\"platform\":\"ANDROID\",\"pushToken\":\"sample-fcm-token\"}}"
+            "text": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"StrongPass123!\",\n  \"device\": {\n    \"platform\": \"ANDROID\",\n    \"pushToken\": \"demo-push-token\"\n  }\n}",
+            "params": []
           }
         },
         "response": {
@@ -161,13 +163,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Log in",
-        "_description": "Save data.accessToken and data.refreshToken from the response.",
+        "_name": "Login",
+        "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:03.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -216,7 +218,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:04.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -259,13 +261,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Log out",
+        "_name": "Logout",
         "_description": "",
         "_expectedStatus": 204
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:05.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
@@ -314,7 +316,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:06.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "PATCH",
@@ -327,12 +329,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{accessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
             }
           ],
           "queryString": [],
@@ -340,7 +342,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"nickname\":\"새닉네임\",\"profileImageUrl\":\"/uploads/{{imageFileName}}\"}"
+            "text": "{\n  \"nickname\": \"분실자수정\",\n  \"profileImageUrl\": \"/uploads/{{imageFileName}}\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -371,7 +374,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:07.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "PATCH",
@@ -384,12 +387,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{accessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
             }
           ],
           "queryString": [],
@@ -397,7 +400,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"platform\":\"ANDROID\",\"pushToken\":\"sample-fcm-token\"}"
+            "text": "{\n  \"platform\": \"ANDROID\",\n  \"pushToken\": \"demo-push-token\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -422,81 +426,17 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Register push token",
+        "_name": "Update push token",
         "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:08.000Z",
-        "time": 0,
-        "request": {
-          "method": "POST",
-          "url": "http://13.124.179.95/api/v1/uploads/images",
-          "httpVersion": "HTTP/1.1",
-          "cookies": [],
-          "headers": [
-            {
-              "name": "Accept",
-              "value": "application/json"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer {{accessToken}}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "multipart/form-data"
-            }
-          ],
-          "queryString": [],
-          "headersSize": -1,
-          "bodySize": -1,
-          "postData": {
-            "mimeType": "multipart/form-data",
-            "params": [
-              {
-                "name": "image",
-                "value": "",
-                "fileName": "{{imagePath}}",
-                "contentType": "image/jpeg"
-              }
-            ]
-          }
-        },
-        "response": {
-          "status": 0,
-          "statusText": "",
-          "httpVersion": "HTTP/1.1",
-          "cookies": [],
-          "headers": [],
-          "content": {
-            "size": 0,
-            "mimeType": "application/json",
-            "text": ""
-          },
-          "redirectURL": "",
-          "headersSize": -1,
-          "bodySize": -1,
-          "_note": "Template request. Send it to capture a response."
-        },
-        "cache": {},
-        "timings": {
-          "send": 0,
-          "wait": 0,
-          "receive": 0
-        },
-        "_name": "Upload post image",
-        "_description": "Choose a JPEG, PNG, or WebP file for the image form field.",
-        "_expectedStatus": 201
-      },
-      {
-        "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:09.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
-          "url": "http://13.124.179.95/uploads/{{imageFileName}}",
+          "url": "http://13.124.179.95/api/v1/categories",
           "httpVersion": "HTTP/1.1",
           "cookies": [],
           "headers": [
@@ -531,13 +471,119 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Download uploaded image",
-        "_description": "Use data.fileName returned by the image upload request.",
+        "_name": "List category tags",
+        "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:10.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/uploads/images",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "multipart/form-data",
+            "params": [
+              {
+                "name": "image",
+                "fileName": "student-card.jpg",
+                "contentType": "image/jpeg",
+                "value": ""
+              }
+            ],
+            "text": ""
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Upload image",
+        "_description": "",
+        "_expectedStatus": 201
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/uploads/{{imageFileName}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "image/*"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Get uploaded image",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -550,12 +596,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{ownerAccessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
             }
           ],
           "queryString": [],
@@ -563,7 +609,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"siteCode\":\"SCHOOL_001\",\"title\":\"검정 에어팟 케이스 잃어버림\",\"category\":\"EARPHONE\",\"color\":\"BLACK\",\"location\":\"체육관\",\"lostAt\":\"2026-07-13T14:00:00Z\",\"features\":\"작은 흰색 별 스티커\",\"privateFeature\":\"안쪽에 K 이니셜\",\"description\":\"체육 수업 후 잃어버림\",\"imageUrl\":\"/uploads/{{imageFileName}}\",\"contactMethod\":\"NOTIFICATION\"}"
+            "text": "{\n  \"siteCode\": \"SCHOOL_001\",\n  \"title\": \"학생증 잃어버림\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당\",\n  \"lostAt\": \"2026-07-13T14:00:00Z\",\n  \"features\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"description\": \"행사 종료 후 확인\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -589,16 +636,16 @@
           "receive": 0
         },
         "_name": "Create lost post",
-        "_description": "Queues automatic matching after the post is created.",
+        "_description": "",
         "_expectedStatus": 201
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:11.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
-          "url": "http://13.124.179.95/api/v1/lost-posts?siteCode=SCHOOL_001&category=EARPHONE&status=OPEN&page=1&size=20",
+          "url": "http://13.124.179.95/api/v1/lost-posts?siteCode=SCHOOL_001&category=CARD&status=OPEN&page=1&size=20",
           "httpVersion": "HTTP/1.1",
           "cookies": [],
           "headers": [
@@ -614,7 +661,7 @@
             },
             {
               "name": "category",
-              "value": "EARPHONE"
+              "value": "CARD"
             },
             {
               "name": "status",
@@ -660,7 +707,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:12.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
@@ -709,7 +756,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:13.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "PATCH",
@@ -722,12 +769,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{ownerAccessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
             }
           ],
           "queryString": [],
@@ -735,7 +782,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"title\":\"검정 에어팟 케이스 분실\",\"features\":\"작은 흰색 별 스티커와 측면 흠집\",\"lostAt\":\"2026-07-13T14:00:00Z\",\"contactMethod\":\"NOTIFICATION\"}"
+            "text": "{\n  \"features\": \"파란 학교 로고와 모서리 흠집\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -766,7 +814,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:14.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "DELETE",
@@ -815,7 +863,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:15.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -858,13 +906,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Analyze lost-post matches",
+        "_name": "Analyze lost post",
         "_description": "",
         "_expectedStatus": 202
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:16.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -877,12 +925,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{finderAccessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
             }
           ],
           "queryString": [],
@@ -890,7 +938,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"siteCode\":\"SCHOOL_001\",\"title\":\"체육관에서 검정 이어폰 케이스 주움\",\"category\":\"EARPHONE_CASE\",\"color\":\"BLACK\",\"location\":\"체육관 입구\",\"foundAt\":\"2026-07-13T14:20:00Z\",\"storageLocation\":\"학생회실\",\"features\":\"작은 흰색 별 스티커\",\"privateFeature\":\"안쪽에 K 이니셜\",\"verificationQuestion\":\"스티커 모양은 무엇인가요?\",\"description\":\"신발장 앞에서 발견\",\"imageUrl\":\"/uploads/{{imageFileName}}\"}"
+            "text": "{\n  \"siteCode\": \"SCHOOL_001\",\n  \"title\": \"강당 입구에서 학생증 주움\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:15:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"features\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는?\",\n  \"description\": \"출입문 옆에서 발견\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -916,16 +965,16 @@
           "receive": 0
         },
         "_name": "Create found post",
-        "_description": "Queues automatic matching after the post is created.",
+        "_description": "",
         "_expectedStatus": 201
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:17.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
-          "url": "http://13.124.179.95/api/v1/found-posts?siteCode=SCHOOL_001&category=EARPHONE_CASE&status=STORED&page=1&size=20",
+          "url": "http://13.124.179.95/api/v1/found-posts?siteCode=SCHOOL_001&category=CARD&status=STORED&page=1&size=20",
           "httpVersion": "HTTP/1.1",
           "cookies": [],
           "headers": [
@@ -941,7 +990,7 @@
             },
             {
               "name": "category",
-              "value": "EARPHONE_CASE"
+              "value": "CARD"
             },
             {
               "name": "status",
@@ -987,7 +1036,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:18.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
@@ -1036,7 +1085,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:19.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "PATCH",
@@ -1049,12 +1098,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{finderAccessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
             }
           ],
           "queryString": [],
@@ -1062,7 +1111,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"title\":\"체육관 입구에서 검정 이어폰 케이스 주움\",\"storageLocation\":\"학생회실 분실물함\",\"features\":\"작은 흰색 별 스티커와 측면 흠집\",\"foundAt\":\"2026-07-13T14:20:00Z\"}"
+            "text": "{\n  \"storageLocation\": \"학생회실 보관함 2번\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -1093,7 +1143,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:20.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "DELETE",
@@ -1142,7 +1192,7 @@
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:21.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
@@ -1185,13 +1235,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "List matches for lost post",
+        "_name": "Matches for lost post",
         "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:22.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
@@ -1234,13 +1284,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "List matches for found post",
+        "_name": "Matches for found post",
         "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:23.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "GET",
@@ -1283,13 +1333,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Get match details",
+        "_name": "Get match",
         "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:24.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "POST",
@@ -1302,12 +1352,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{ownerAccessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
             }
           ],
           "queryString": [],
@@ -1315,7 +1365,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"answer\":\"흰색 별 모양입니다.\",\"message\":\"제 물건 같습니다.\"}"
+            "text": "{\n  \"answer\": \"42\",\n  \"message\": \"제 학생증 같습니다.\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -1340,13 +1391,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Claim matched item",
-        "_description": "",
+        "_name": "Claim match and create chat",
+        "_description": "성공 응답의 chatRoomId로 Socket.IO 채팅에 입장합니다.",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:25.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "PATCH",
@@ -1389,13 +1440,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Verify claim",
+        "_name": "Verify match",
         "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:26.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "PATCH",
@@ -1408,12 +1459,12 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer {{ownerAccessToken}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
             }
           ],
           "queryString": [],
@@ -1421,7 +1472,8 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"reason\":\"제 물건의 특징과 다릅니다.\"}"
+            "text": "{\n  \"reason\": \"특징이 다릅니다.\"\n}",
+            "params": []
           }
         },
         "response": {
@@ -1446,13 +1498,13 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Reject match or claim",
+        "_name": "Reject match",
         "_description": "",
         "_expectedStatus": 200
       },
       {
         "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T04:40:27.000Z",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
           "method": "PATCH",
@@ -1495,24 +1547,290 @@
           "wait": 0,
           "receive": 0
         },
-        "_name": "Complete handover",
+        "_name": "Handover match",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/chats",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "List my chat rooms",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/chats/matches/{{matchId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Open or recover chat room",
+        "_description": "CLAIM_REQUESTED 이후에만 생성 또는 조회할 수 있습니다.",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/chats/{{chatRoomId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Get chat room",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/chats/{{chatRoomId}}/messages?limit=50",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [
+            {
+              "name": "limit",
+              "value": "50"
+            }
+          ],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "List chat messages",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T06:30:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/chats/{{chatRoomId}}/read",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\n  \"messageId\": \"{{messageId}}\"\n}",
+            "params": []
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Mark chat messages read",
         "_description": "",
         "_expectedStatus": 200
       }
     ],
-    "_comment": "Complete request template for the LostLink Flask backend. Replace {{...}} placeholders before sending protected or resource-specific requests.",
-    "_variables": {
-      "baseUrl": "http://13.124.179.95",
-      "accessToken": "Access token returned by POST /api/v1/auth/login",
-      "refreshToken": "Refresh token returned by POST /api/v1/auth/login",
-      "ownerAccessToken": "Access token for the lost-post owner",
-      "finderAccessToken": "Access token for the found-post owner",
-      "adminAccessToken": "Access token for an ADMIN user",
-      "lostPostId": "LostPost ID",
-      "foundPostId": "FoundPost ID",
-      "matchId": "Match ID",
-      "imagePath": "Local JPEG, PNG, or WebP path",
-      "imageFileName": "fileName returned by POST /api/v1/uploads/images"
+    "_socketIO": {
+      "url": "http://13.124.179.95/socket.io",
+      "protocol": "Socket.IO 4.x",
+      "auth": {
+        "token": "{{ownerAccessToken}}"
+      },
+      "clientEvents": [
+        "join_chat",
+        "leave_chat",
+        "send_message",
+        "typing",
+        "mark_read"
+      ],
+      "serverEvents": [
+        "connected",
+        "new_message",
+        "typing",
+        "messages_read"
+      ],
+      "note": "HAR에는 HTTP 요청만 실행됩니다. 이 필드는 Postman Socket.IO 요청 생성용 메타데이터입니다."
     }
   }
 }

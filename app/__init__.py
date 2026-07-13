@@ -5,7 +5,7 @@ from flask_cors import CORS
 
 from .config import Config
 from .errors import register_error_handlers
-from .extensions import db, init_celery, jwt, migrate
+from .extensions import db, init_celery, jwt, migrate, socketio
 
 
 def create_app(config_object=Config):
@@ -17,6 +17,12 @@ def create_app(config_object=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
+    socketio.init_app(
+        app,
+        async_mode="threading",
+        cors_allowed_origins=app.config["SOCKET_CORS_ORIGINS"],
+        message_queue=app.config["REDIS_URL"] or None,
+    )
     CORS(app, resources={r"/api/*": {"origins": "*"}})
     init_celery(app)
 
@@ -26,10 +32,12 @@ def create_app(config_object=Config):
     )
     from .api import register_blueprints
     from .cli import register_cli
+    from .socket_events import register_socket_events
 
     register_blueprints(app)
     register_error_handlers(app)
     register_cli(app)
+    register_socket_events()
 
     @app.get("/healthz")
     def healthz():

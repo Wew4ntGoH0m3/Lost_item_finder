@@ -9,13 +9,6 @@ from ..extensions import db
 from ..models import FoundPost, LostPost, Match
 from .llm import rank_with_llm
 
-CATEGORY_GROUPS = [
-    {"EARPHONE", "EARPHONE_CASE", "AIRPODS", "이어폰", "에어팟", "이어폰케이스"},
-    {"WALLET", "CARD_WALLET", "지갑", "카드지갑"},
-    {"CARD", "ID_CARD", "STUDENT_ID", "학생증", "신분증", "카드"},
-    {"BAG", "BACKPACK", "가방", "백팩"},
-    {"KEY", "KEYRING", "열쇠", "키링"},
-]
 COLOR_GROUPS = [
     {"BLACK", "검정", "검은색", "블랙"},
     {"WHITE", "흰색", "하양", "화이트"},
@@ -56,13 +49,7 @@ def _aware(value):
 
 
 def rule_score(lost: LostPost, found: FoundPost) -> dict:
-    category_ratio = _similarity(lost.category, found.category)
-    if category_ratio == 1:
-        category_score = 30.0
-    elif _same_group(lost.category, found.category, CATEGORY_GROUPS):
-        category_score = 27.0
-    else:
-        category_score = round(30 * category_ratio, 2) if category_ratio >= 0.45 else 0.0
+    category_score = 30.0 if lost.category == found.category else 0.0
 
     color_ratio = _similarity(lost.color, found.color)
     if color_ratio == 1:
@@ -126,9 +113,10 @@ def _candidate_query(lost: LostPost, candidate_ids=None):
         .where(
             FoundPost.site_code == lost.site_code,
             FoundPost.status == "STORED",
+            FoundPost.category == lost.category,
             FoundPost.found_at >= lost.lost_at,
         )
-        .order_by((FoundPost.category == lost.category).desc(), FoundPost.found_at.asc())
+        .order_by(FoundPost.found_at.asc())
         .limit(current_app.config["MATCH_CANDIDATE_LIMIT"])
     )
     if candidate_ids:
@@ -194,9 +182,10 @@ def analyze_found_post(found_post_id: int) -> dict:
         .where(
             LostPost.site_code == found.site_code,
             LostPost.status == "OPEN",
+            LostPost.category == found.category,
             LostPost.lost_at <= found.found_at,
         )
-        .order_by((LostPost.category == found.category).desc(), LostPost.lost_at.desc())
+        .order_by(LostPost.lost_at.desc())
         .limit(current_app.config["MATCH_CANDIDATE_LIMIT"])
     )
     lost_ids = list(db.session.scalars(statement))

@@ -29,7 +29,7 @@ def _strip_code_fence(content: str) -> str:
 def _post_data(post, lost: bool) -> dict:
     return {
         "id": post.id,
-        "category": post.category,
+        "category": post.category.value,
         "color": post.color,
         "location": post.location,
         "occurredAt": (post.lost_at if lost else post.found_at).isoformat(),
@@ -62,8 +62,7 @@ def _validate_result(raw: dict, allowed_ids: set[int]) -> dict[int, dict]:
 
 
 def rank_with_llm(lost_post, candidates) -> tuple[dict[int, dict], str] | None:
-    api_key = current_app.config["LLM_API_KEY"]
-    if not api_key or not candidates:
+    if not current_app.config["OLLAMA_ENABLED"] or not candidates:
         return None
 
     payload = {
@@ -78,29 +77,27 @@ def rank_with_llm(lost_post, candidates) -> tuple[dict[int, dict], str] | None:
         "Never invent candidate IDs. Respect every score limit. Do not expose private data."
     )
     request_body = {
-        "model": current_app.config["LLM_MODEL"],
-        "temperature": 0,
-        "response_format": {"type": "json_object"},
+        "model": current_app.config["OLLAMA_MODEL"],
+        "stream": False,
+        "think": False,
+        "format": "json",
+        "options": {"temperature": 0},
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
         ],
     }
-    url = f"{current_app.config['LLM_BASE_URL'].rstrip('/')}/chat/completions"
+    url = f"{current_app.config['OLLAMA_BASE_URL'].rstrip('/')}/api/chat"
     try:
-        with httpx.Client(timeout=current_app.config["LLM_TIMEOUT_SECONDS"]) as client:
-            response = client.post(
-                url,
-                headers={"Authorization": f"Bearer {api_key}"},
-                json=request_body,
-            )
+        with httpx.Client(timeout=current_app.config["OLLAMA_TIMEOUT_SECONDS"]) as client:
+            response = client.post(url, json=request_body)
             response.raise_for_status()
-        content = response.json()["choices"][0]["message"]["content"]
+        content = response.json()["message"]["content"]
         raw = json.loads(_strip_code_fence(content))
         results = _validate_result(raw, {item.id for item in candidates})
         if not results:
             return None
-        return results, f"llm:{current_app.config['LLM_MODEL']}"
+        return results, f"ollama:{current_app.config['OLLAMA_MODEL']}"
     except (httpx.HTTPError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         logger.exception("LLM matching failed; falling back to rule scoring")
         return None

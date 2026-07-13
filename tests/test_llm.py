@@ -36,8 +36,7 @@ def test_ollama_native_json_matching(monkeypatch, app):
         def json(self):
             return {
                 "message": {
-                    "content": "",
-                    "thinking": json.dumps(result_body, ensure_ascii=False),
+                    "content": json.dumps(result_body, ensure_ascii=False)
                 }
             }
 
@@ -93,7 +92,6 @@ def test_ollama_native_json_matching(monkeypatch, app):
     assert captured["body"]["think"] is False
     assert captured["body"]["format"] == "json"
 
-
 def test_ollama_generates_grounded_found_post_content(monkeypatch, app):
     captured = {}
     result_body = {
@@ -109,8 +107,7 @@ def test_ollama_generates_grounded_found_post_content(monkeypatch, app):
         def json(self):
             return {
                 "message": {
-                    "content": "",
-                    "thinking": json.dumps(result_body, ensure_ascii=False),
+                    "content": ""
                 }
             }
 
@@ -201,7 +198,6 @@ def test_found_content_passes_through_llm_output_without_fact_checking(monkeypat
     assert generator == "ollama:qwen3-vl:4b"
     assert content["features"] == result_body["features"]
 
-
 def test_ollama_analyzes_image_for_category_and_content(monkeypatch, app):
     captured = {}
     result_body = {
@@ -256,7 +252,6 @@ def test_ollama_analyzes_image_for_category_and_content(monkeypatch, app):
         base64.b64encode(b"raw-image-bytes").decode("ascii")
     ]
     assert json.loads(captured["body"]["messages"][1]["content"]) == {"sourceFacts": facts}
-
 
 def test_found_image_content_defaults_category_but_keeps_llm_text(monkeypatch, app):
     result_body = {

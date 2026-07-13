@@ -232,15 +232,6 @@ def _validate_generated_image_content(raw, facts: dict[str, str]) -> dict | None
     if location_term and location_term not in combined:
         return None
 
-    source_numbers = {
-        str(int(value)) for value in re.findall(r"\d+", " ".join(facts.values()))
-    }
-    generated_numbers = {
-        str(int(value)) for value in re.findall(r"\d+", " ".join(text_fields.values()))
-    }
-    if not generated_numbers.issubset(source_numbers):
-        return None
-
     return {"category": category, "color": color, **text_fields}
 
 

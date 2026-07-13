@@ -39,7 +39,7 @@ jobs:
             set -eu
             DEPLOY_DIR="$HOME/Dorm_lost_item_finder"
             if [ ! -d "$DEPLOY_DIR/.git" ]; then
-              git clone --branch BE --single-branch https://github.com/Wew4ntGoH0m3/Dorm_lost_item_finder.git "$DEPLOY_DIR"
+              git clone --branch BE --single-branch https://github.com/Wew4ntGoH0m3/Lost_item_finder.git "$DEPLOY_DIR"
             fi
             cd "$DEPLOY_DIR"
             git fetch origin BE

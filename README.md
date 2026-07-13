@@ -2,7 +2,7 @@
 
 학교·행사장의 분실글과 습득글을 동일 카테고리 태그로 먼저 조회한 뒤 AI로 비교하고, 매칭 당사자를 실시간 채팅으로 연결하는 Flask 백엔드입니다.
 
-상세 기획과 API·Socket.IO 명세는 [docs/API_SPEC.md](docs/API_SPEC.md), HTTP 요청 모음은 [har1.2.json](har1.2.json)을 참고하세요.
+상세 기획과 API·Socket.IO 명세는 [docs/API_SPEC.md](docs/API_SPEC.md), Postman Collection v2.1은 [LostLink.postman_collection.json](LostLink.postman_collection.json), HTTP HAR는 [har1.2.json](har1.2.json)을 참고하세요.
 
 ## 핵심 기능
 

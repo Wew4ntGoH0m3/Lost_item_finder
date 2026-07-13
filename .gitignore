@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.env
+data/
+uploads/
+htmlcov/

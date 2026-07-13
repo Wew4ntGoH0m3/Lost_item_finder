@@ -221,55 +221,6 @@
         "startedDateTime": "2026-07-13T06:30:00.000Z",
         "time": 0,
         "request": {
-          "method": "POST",
-          "url": "http://13.124.179.95/api/v1/auth/logout",
-          "httpVersion": "HTTP/1.1",
-          "cookies": [],
-          "headers": [
-            {
-              "name": "Accept",
-              "value": "application/json"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer {{accessToken}}"
-            }
-          ],
-          "queryString": [],
-          "headersSize": -1,
-          "bodySize": -1
-        },
-        "response": {
-          "status": 0,
-          "statusText": "",
-          "httpVersion": "HTTP/1.1",
-          "cookies": [],
-          "headers": [],
-          "content": {
-            "size": 0,
-            "mimeType": "application/json",
-            "text": ""
-          },
-          "redirectURL": "",
-          "headersSize": -1,
-          "bodySize": -1,
-          "_note": "Template request. Send it to capture a response."
-        },
-        "cache": {},
-        "timings": {
-          "send": 0,
-          "wait": 0,
-          "receive": 0
-        },
-        "_name": "Logout",
-        "_description": "",
-        "_expectedStatus": 204
-      },
-      {
-        "pageref": "page_lostlink_flask_api",
-        "startedDateTime": "2026-07-13T06:30:00.000Z",
-        "time": 0,
-        "request": {
           "method": "GET",
           "url": "http://13.124.179.95/api/v1/users/me",
           "httpVersion": "HTTP/1.1",

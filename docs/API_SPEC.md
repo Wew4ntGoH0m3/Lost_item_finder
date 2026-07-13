@@ -360,7 +360,6 @@ Authorization: Bearer {accessToken}
 | POST | `/auth/signup` | 공개, Postman 설정용 | 테스트 계정 생성 |
 | POST | `/auth/login` | 공개 | 로그인, JWT 발급 |
 | POST | `/auth/refresh` | Refresh JWT | Access Token 갱신 |
-| POST | `/auth/logout` | JWT | 로그아웃 응답 |
 | GET | `/users/me` | JWT | 내 정보 조회 |
 | PATCH | `/users/me` | JWT | 닉네임·프로필 수정 |
 | PATCH | `/users/me/push-token` | JWT | 앱 푸시 토큰 저장 |

@@ -84,6 +84,16 @@ def test_postman_signup_login_and_jwt_protection(client):
     assert "role" not in user
 
 
+def test_logout_is_client_side_only(client):
+    signup(client, "client-logout@example.com")
+    token = login(client, "client-logout@example.com")
+
+    response = client.post("/api/v1/auth/logout", headers=auth(token))
+
+    assert response.status_code == 404
+    assert response.get_json()["error"]["code"] == "ROUTE_NOT_FOUND"
+
+
 def test_one_user_can_create_both_lost_and_found_posts(client):
     signup(client, "both-posts@example.com", "통합사용자")
     token = login(client, "both-posts@example.com")

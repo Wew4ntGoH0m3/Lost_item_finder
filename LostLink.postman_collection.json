@@ -244,40 +244,6 @@
             "description": ""
           },
           "response": []
-        },
-        {
-          "name": "Logout User A",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test(\"Status code is 204\", function () {",
-                  "    pm.expect(pm.response.code).to.eql(204);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{userAAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/api/v1/auth/logout",
-            "description": "현재 서버는 stateless JWT이므로 클라이언트 토큰 삭제가 실제 로그아웃 처리입니다."
-          },
-          "response": []
         }
       ]
     },

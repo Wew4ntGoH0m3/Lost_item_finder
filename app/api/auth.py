@@ -12,7 +12,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from ..errors import ApiError
 from ..extensions import db
 from ..models import User
-from ..utils import body, current_user, require_fields, success
+from ..utils import body, require_fields, success
 
 bp = Blueprint("auth", __name__)
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -90,10 +90,3 @@ def refresh():
     if not user or not user.is_active:
         raise ApiError("UNAUTHORIZED", "유효하지 않은 사용자입니다.", 401)
     return success({"accessToken": create_access_token(identity=identity)})
-
-
-@bp.post("/logout")
-@jwt_required(verify_type=False)
-def logout():
-    current_user()
-    return "", 204

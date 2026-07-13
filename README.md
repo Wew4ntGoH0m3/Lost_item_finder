@@ -2,7 +2,7 @@
 
 학교·행사장의 분실글과 습득글을 동일 카테고리 태그로 먼저 조회한 뒤 AI로 비교하고, 매칭 당사자를 실시간 채팅으로 연결하는 Flask 백엔드입니다.
 
-상세 기획과 API·Socket.IO 명세는 [docs/API_SPEC.md](docs/API_SPEC.md), Postman Collection v2.1은 [LostLink.postman_collection.json](LostLink.postman_collection.json), HTTP HAR는 [har1.2.json](har1.2.json)을 참고하세요.
+상세 기획과 API·Socket.IO 명세는 [docs/API_SPEC.md](docs/API_SPEC.md), DTO·DB 컬럼 명세는 [docs/DTO_AND_SCHEMA_REFERENCE.md](docs/DTO_AND_SCHEMA_REFERENCE.md), Postman Collection v2.1은 [LostLink.postman_collection.json](LostLink.postman_collection.json), HTTP HAR는 [har1.2.json](har1.2.json)을 참고하세요.
 
 ## 핵심 기능
 
@@ -10,7 +10,7 @@
 - 회원가입 API 유지, 모바일 앱 회원가입 화면 제외, Postman으로 시연 계정 생성
 - `CARD`, `WALLET`, `EARPHONE` 등 10개 공통 `ItemCategory` Enum
 - 입력된 공개 정보만 사용하는 Ollama 습득글 제목·특징·설명 자동 작성
-- 같은 시설·카테고리·유효 상태·시간 범위의 후보만 SQL에서 조회
+- 같은 카테고리·유효 상태·시간 범위의 후보만 SQL에서 조회
 - Ollama `qwen3-vl:4b` 분석, 실패 시 `rule-v1` 자동 대체
 - 수령 요청 시 분실글·습득글 작성자 전용 채팅방 자동 생성
 - Socket.IO 실시간 메시지·입력 상태·읽음 처리와 PostgreSQL 메시지 저장

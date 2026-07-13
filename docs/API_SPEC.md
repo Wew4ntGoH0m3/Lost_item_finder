@@ -11,7 +11,7 @@
 | 카테고리 | 별도 테이블 없이 공통 `ItemCategory` Enum 태그 사용 |
 | 데이터베이스 | PostgreSQL 16, SQLAlchemy, Alembic |
 | 비동기 분석 | Redis + Celery |
-| AI | Ollama `qwen3:4b`, 습득글 자동 작성과 매칭 분석 모두 `think: false` |
+| AI | Ollama `qwen3-vl:4b`, 습득글 자동 작성과 매칭 분석 모두 `think: false` |
 | 이미지 | Base64 미사용, multipart 업로드 후 EC2 디스크 저장·Nginx 제공 |
 | 실시간 채팅 | Flask-SocketIO + Redis, 매칭 당사자 전용 |
 | 핵심 테이블 | `users`, `lost_posts`, `found_posts`, `matches`, `chat_rooms`, `chat_messages` |
@@ -31,7 +31,7 @@
 | 자유 문자열 카테고리 | `ItemCategory` Enum으로 제한 | 오타와 표현 차이 방지 |
 | 습득글 내용 입력 | 공개 사실만 받고 제목·특징·설명은 LLM 자동 생성 | 작성 부담과 임의 추측 최소화 |
 | 전체 후보 조회 | 동일 시설·동일 태그·다른 작성자·상태·시간 조건 SQL 선필터 | 자기 게시글과 다른 물건 혼입 및 LLM 입력량 감소 |
-| AI | Ollama `qwen3:4b` 사용 | 별도 외부 API 키 없이 시연 |
+| AI | Ollama `qwen3-vl:4b` 사용 | 별도 외부 API 키 없이 시연 |
 | 채팅 | 수령 요청 후 당사자 전용 Socket.IO 방 생성 | 앱 내 연락과 대화 내역 보존 |
 
 ### “Postman 회원가입”의 정확한 의미
@@ -66,7 +66,7 @@ Flask API :8000
     |---- Redis (Celery 브로커, Socket.IO message queue)
     `---- Celery Worker
               |
-              `---- Ollama 100.102.0.2:11434 / qwen3:4b
+              `---- Ollama 100.102.0.2:11434 / qwen3-vl:4b
 ```
 
 ### 습득글 자동 작성 및 분석 처리
@@ -186,7 +186,7 @@ ON found_posts (site_code, status, category, found_at);
 | `time_score` | DECIMAL(5,2) | Y | 0~15 |
 | `feature_score` | DECIMAL(5,2) | Y | 0~20 |
 | `reasons` | JSON | Y | 매칭 이유 |
-| `model_version` | VARCHAR(50) | Y | `ollama:qwen3:4b`, `rule-v1` |
+| `model_version` | VARCHAR(50) | Y | `ollama:qwen3-vl:4b`, `rule-v1` |
 | `status` | VARCHAR(30) | Y | 매칭·인계 상태 |
 | `claim_answer` | TEXT | N | 본인 확인 답변 |
 | `claim_message` | VARCHAR(500) | N | 수령 요청 메시지 |
@@ -303,7 +303,7 @@ Worker 호출 형식:
 
 ```json
 {
-  "model": "qwen3:4b",
+  "model": "qwen3-vl:4b",
   "stream": false,
   "think": false,
   "format": "json",
@@ -562,7 +562,7 @@ POSTGRES_DB=db_server
 UPLOADS_PATH=/home/ec2-user/lostlink-uploads
 OLLAMA_ENABLED=true
 OLLAMA_BASE_URL=http://100.102.0.2:11434
-OLLAMA_MODEL=qwen3:4b
+OLLAMA_MODEL=qwen3-vl:4b
 MATCH_MIN_SCORE=50
 SOCKET_CORS_ORIGINS=*
 ```

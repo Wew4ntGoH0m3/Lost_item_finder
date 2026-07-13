@@ -92,7 +92,8 @@ def rank_with_llm(lost_post, candidates) -> tuple[dict[int, dict], str] | None:
         with httpx.Client(timeout=current_app.config["OLLAMA_TIMEOUT_SECONDS"]) as client:
             response = client.post(url, json=request_body)
             response.raise_for_status()
-        content = response.json()["message"]["content"]
+        message = response.json()["message"]
+        content = message.get("content") or message.get("thinking")
         raw = json.loads(_strip_code_fence(content))
         results = _validate_result(raw, {item.id for item in candidates})
         if not results:

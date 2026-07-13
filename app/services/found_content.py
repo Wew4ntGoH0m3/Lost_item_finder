@@ -146,7 +146,9 @@ def generate_found_post_content(facts: dict[str, str]) -> tuple[dict[str, str], 
         with httpx.Client(timeout=current_app.config["OLLAMA_CONTENT_TIMEOUT_SECONDS"]) as client:
             response = client.post(url, json=request_body)
             response.raise_for_status()
-        raw = json.loads(_strip_code_fence(response.json()["message"]["content"]))
+        message = response.json()["message"]
+        response_content = message.get("content") or message.get("thinking")
+        raw = json.loads(_strip_code_fence(response_content))
         content = _validate_generated_content(raw, facts)
         if content:
             return content, f"ollama:{current_app.config['OLLAMA_MODEL']}"

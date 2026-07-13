@@ -11,7 +11,7 @@
 - `CARD`, `WALLET`, `EARPHONE` 등 10개 공통 `ItemCategory` Enum
 - 입력된 공개 정보만 사용하는 Ollama 습득글 제목·특징·설명 자동 작성
 - 같은 시설·카테고리·유효 상태·시간 범위의 후보만 SQL에서 조회
-- Ollama `qwen3:4b` 분석, 실패 시 `rule-v1` 자동 대체
+- Ollama `qwen3-vl:4b` 분석, 실패 시 `rule-v1` 자동 대체
 - 수령 요청 시 분실글·습득글 작성자 전용 채팅방 자동 생성
 - Socket.IO 실시간 메시지·입력 상태·읽음 처리와 PostgreSQL 메시지 저장
 - Redis/Celery 비동기 분석, EC2 이미지 저장, Docker Compose 배포
@@ -25,7 +25,7 @@
 | 실시간 채팅 | Flask-SocketIO, WebSocket, Redis message queue |
 | DB | PostgreSQL 16, SQLAlchemy, Alembic |
 | 비동기 분석 | Celery, Redis |
-| AI | Ollama native `/api/chat`, `qwen3:4b` |
+| AI | Ollama native `/api/chat`, `qwen3-vl:4b` |
 | 파일 | EC2 bind mount, Nginx `/uploads/` |
 | 배포 | Docker Compose, GitHub Actions |
 

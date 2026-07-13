@@ -31,7 +31,12 @@ def test_ollama_native_json_matching(monkeypatch, app):
             return None
 
         def json(self):
-            return {"message": {"content": json.dumps(result_body, ensure_ascii=False)}}
+            return {
+                "message": {
+                    "content": "",
+                    "thinking": json.dumps(result_body, ensure_ascii=False),
+                }
+            }
 
     class FakeClient:
         def __init__(self, timeout):
@@ -71,16 +76,16 @@ def test_ollama_native_json_matching(monkeypatch, app):
     app.config.update(
         OLLAMA_ENABLED=True,
         OLLAMA_BASE_URL="http://100.102.0.2:11434",
-        OLLAMA_MODEL="qwen3:4b",
+        OLLAMA_MODEL="qwen3-vl:4b",
         OLLAMA_TIMEOUT_SECONDS=60,
     )
     with app.app_context():
         results, model_version = rank_with_llm(lost, [found])
 
-    assert model_version == "ollama:qwen3:4b"
+    assert model_version == "ollama:qwen3-vl:4b"
     assert results[2]["score"] == 98
     assert captured["url"] == "http://100.102.0.2:11434/api/chat"
-    assert captured["body"]["model"] == "qwen3:4b"
+    assert captured["body"]["model"] == "qwen3-vl:4b"
     assert captured["body"]["stream"] is False
     assert captured["body"]["think"] is False
     assert captured["body"]["format"] == "json"
@@ -99,7 +104,12 @@ def test_ollama_generates_grounded_found_post_content(monkeypatch, app):
             return None
 
         def json(self):
-            return {"message": {"content": json.dumps(result_body, ensure_ascii=False)}}
+            return {
+                "message": {
+                    "content": "",
+                    "thinking": json.dumps(result_body, ensure_ascii=False),
+                }
+            }
 
     class FakeClient:
         def __init__(self, timeout):
@@ -127,14 +137,14 @@ def test_ollama_generates_grounded_found_post_content(monkeypatch, app):
     app.config.update(
         OLLAMA_ENABLED=True,
         OLLAMA_BASE_URL="http://100.102.0.2:11434",
-        OLLAMA_MODEL="qwen3:4b",
+        OLLAMA_MODEL="qwen3-vl:4b",
         OLLAMA_CONTENT_TIMEOUT_SECONDS=20,
     )
     with app.app_context():
         content, generator = generate_found_post_content(facts)
 
     assert content == result_body
-    assert generator == "ollama:qwen3:4b"
+    assert generator == "ollama:qwen3-vl:4b"
     assert captured["timeout"] == 20
     assert captured["body"]["think"] is False
     assert captured["body"]["format"]["additionalProperties"] is False

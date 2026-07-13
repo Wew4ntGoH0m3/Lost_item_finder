@@ -6,8 +6,10 @@ from difflib import SequenceMatcher
 from flask import current_app
 
 from ..extensions import db
-from ..models import FoundPost, LostPost, Match
+from ..models import FoundPost, ItemCategory, LostPost, Match
 from .llm import rank_with_llm
+
+UNKNOWN_COLOR_VALUES = {"", "unknown", "미상", "모름"}
 
 COLOR_GROUPS = [
     {"BLACK", "검정", "검은색", "블랙"},
@@ -48,16 +50,30 @@ def _aware(value):
     return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
 
 
-def rule_score(lost: LostPost, found: FoundPost) -> dict:
-    category_score = 30.0 if lost.category == found.category else 0.0
+def _is_unknown_color(color: str | None) -> bool:
+    return _normalize(color) in UNKNOWN_COLOR_VALUES
 
-    color_ratio = _similarity(lost.color, found.color)
-    if color_ratio == 1:
-        color_score = 15.0
-    elif _same_group(lost.color, found.color, COLOR_GROUPS):
-        color_score = 13.0
+
+def rule_score(lost: LostPost, found: FoundPost) -> dict:
+    category_unknown = lost.category == ItemCategory.ETC or found.category == ItemCategory.ETC
+    if lost.category == found.category:
+        category_score = 30.0
+    elif category_unknown:
+        category_score = 15.0
     else:
-        color_score = round(15 * color_ratio, 2) if color_ratio >= 0.5 else 0.0
+        category_score = 0.0
+
+    color_unknown = _is_unknown_color(lost.color) or _is_unknown_color(found.color)
+    if color_unknown:
+        color_score = 7.5
+    else:
+        color_ratio = _similarity(lost.color, found.color)
+        if color_ratio == 1:
+            color_score = 15.0
+        elif _same_group(lost.color, found.color, COLOR_GROUPS):
+            color_score = 13.0
+        else:
+            color_score = round(15 * color_ratio, 2) if color_ratio >= 0.5 else 0.0
 
     location_ratio = _similarity(lost.location, found.location)
     location_score = round(20 * location_ratio, 2) if location_ratio >= 0.35 else 0.0
@@ -89,6 +105,8 @@ def rule_score(lost: LostPost, found: FoundPost) -> dict:
     reasons = []
     if category_score >= 20:
         reasons.append("물건 종류가 같거나 유사합니다.")
+    elif category_unknown:
+        reasons.append("카테고리 정보가 불명확해 다른 조건으로 비교했습니다.")
     if color_score >= 10:
         reasons.append("대표 색상이 일치하거나 유사합니다.")
     if location_score >= 12:
@@ -108,16 +126,17 @@ def rule_score(lost: LostPost, found: FoundPost) -> dict:
 
 
 def _candidate_query(lost: LostPost, candidate_ids=None):
-    statement = (
-        db.select(FoundPost)
-        .where(
-            FoundPost.status == "STORED",
-            FoundPost.category == lost.category,
-            FoundPost.user_id != lost.user_id,
-            FoundPost.found_at >= lost.lost_at,
+    statement = db.select(FoundPost).where(
+        FoundPost.status == "STORED",
+        FoundPost.user_id != lost.user_id,
+        FoundPost.found_at >= lost.lost_at,
+    )
+    if lost.category != ItemCategory.ETC:
+        statement = statement.where(
+            FoundPost.category.in_([lost.category, ItemCategory.ETC])
         )
-        .order_by(FoundPost.found_at.asc())
-        .limit(current_app.config["MATCH_CANDIDATE_LIMIT"])
+    statement = statement.order_by(FoundPost.found_at.asc()).limit(
+        current_app.config["MATCH_CANDIDATE_LIMIT"]
     )
     if candidate_ids:
         statement = statement.where(FoundPost.id.in_(candidate_ids))
@@ -177,16 +196,17 @@ def analyze_found_post(found_post_id: int) -> dict:
     found = db.session.get(FoundPost, found_post_id)
     if not found or found.status != "STORED":
         return {"foundPostId": found_post_id, "matched": 0, "skipped": True}
-    statement = (
-        db.select(LostPost.id)
-        .where(
-            LostPost.status == "OPEN",
-            LostPost.category == found.category,
-            LostPost.user_id != found.user_id,
-            LostPost.lost_at <= found.found_at,
+    statement = db.select(LostPost.id).where(
+        LostPost.status == "OPEN",
+        LostPost.user_id != found.user_id,
+        LostPost.lost_at <= found.found_at,
+    )
+    if found.category != ItemCategory.ETC:
+        statement = statement.where(
+            LostPost.category.in_([found.category, ItemCategory.ETC])
         )
-        .order_by(LostPost.lost_at.desc())
-        .limit(current_app.config["MATCH_CANDIDATE_LIMIT"])
+    statement = statement.order_by(LostPost.lost_at.desc()).limit(
+        current_app.config["MATCH_CANDIDATE_LIMIT"]
     )
     lost_ids = list(db.session.scalars(statement))
     matched = sum(

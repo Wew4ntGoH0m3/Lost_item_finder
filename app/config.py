@@ -34,7 +34,7 @@ class Config:
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3-vl:4b")
     OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "60"))
     OLLAMA_CONTENT_TIMEOUT_SECONDS = float(
-        os.getenv("OLLAMA_CONTENT_TIMEOUT_SECONDS", "20")
+        os.getenv("OLLAMA_CONTENT_TIMEOUT_SECONDS", "60")
     )
     MATCH_MIN_SCORE = float(os.getenv("MATCH_MIN_SCORE", "50"))
     MATCH_NOTIFY_SCORE = float(os.getenv("MATCH_NOTIFY_SCORE", "85"))

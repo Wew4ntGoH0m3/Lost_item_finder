@@ -12,8 +12,8 @@ from ..models import ITEM_CATEGORY_LABELS, ItemCategory
 
 logger = logging.getLogger(__name__)
 
-LLM_IMAGE_MAX_DIMENSION = 1024
-LLM_IMAGE_JPEG_QUALITY = 85
+LLM_IMAGE_MAX_DIMENSION = 768
+LLM_IMAGE_JPEG_QUALITY = 80
 
 COLOR_LABELS = {
     "BLACK": "검정색",

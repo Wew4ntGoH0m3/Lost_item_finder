@@ -159,7 +159,7 @@ def test_ollama_generates_grounded_found_post_content(monkeypatch, app):
     assert "이름 초성" not in request_text
 
 
-def test_found_content_rejects_unsupported_llm_numbers(monkeypatch, app):
+def test_found_content_passes_through_llm_output_without_fact_checking(monkeypatch, app):
     result_body = {
         "title": "강당 입구에서 파란색 학생증을 주웠습니다",
         "features": "파란색 학생증이며 안에 999만원이 있습니다.",
@@ -198,9 +198,8 @@ def test_found_content_rejects_unsupported_llm_numbers(monkeypatch, app):
     with app.app_context():
         content, generator = generate_found_post_content(facts)
 
-    assert generator == "grounded-template-v1"
-    assert content["features"] == "앞면에 학교 로고"
-    assert "999" not in json.dumps(content, ensure_ascii=False)
+    assert generator == "ollama:qwen3-vl:4b"
+    assert content["features"] == result_body["features"]
 
 
 def test_ollama_analyzes_image_for_category_and_content(monkeypatch, app):

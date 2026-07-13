@@ -92,10 +92,6 @@ def _strip_code_fence(content: str) -> str:
     return "\n".join(lines).strip()
 
 
-def _normalize(value: str) -> str:
-    return re.sub(r"[^0-9a-zA-Z가-힣]", "", value).lower()
-
-
 def _validate_generated_content(raw, facts: dict[str, str]) -> dict[str, str] | None:
     if not isinstance(raw, dict) or set(raw) != {"title", "features", "description"}:
         return None
@@ -108,23 +104,6 @@ def _validate_generated_content(raw, facts: dict[str, str]) -> dict[str, str] | 
     if not content["features"] or len(content["features"]) > 2000:
         return None
     if not content["description"] or len(content["description"]) > 2000:
-        return None
-
-    combined = _normalize(" ".join(content.values()))
-    category_terms = [_normalize(item) for item in facts["category"].split("/")]
-    required_terms = [_normalize(facts["location"]), _normalize(facts["color"])]
-    if any(term and term not in combined for term in required_terms):
-        return None
-    if not any(term and term in combined for term in category_terms):
-        return None
-
-    source_numbers = {
-        str(int(value)) for value in re.findall(r"\d+", " ".join(facts.values()))
-    }
-    generated_numbers = {
-        str(int(value)) for value in re.findall(r"\d+", " ".join(content.values()))
-    }
-    if not generated_numbers.issubset(source_numbers):
         return None
     return content
 
@@ -225,11 +204,6 @@ def _validate_generated_image_content(raw, facts: dict[str, str]) -> dict | None
     if not text_fields["features"] or len(text_fields["features"]) > 2000:
         return None
     if not text_fields["description"] or len(text_fields["description"]) > 2000:
-        return None
-
-    combined = _normalize(" ".join(text_fields.values()))
-    location_term = _normalize(facts["location"])
-    if location_term and location_term not in combined:
         return None
 
     return {"category": category, "color": color, **text_fields}

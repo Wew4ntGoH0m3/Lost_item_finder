@@ -14,6 +14,18 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _iso_utc(value: datetime) -> str:
+    """Serialize as UTC with an explicit offset.
+
+    Columns are stored as naive UTC, and a naive isoformat() string is
+    parsed as local time by clients (e.g. Dart's DateTime.parse), which
+    silently shifts every timestamp by the client's UTC offset.
+    """
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat()
+
+
 class ItemCategory(str, Enum):
     CARD = "CARD"
     WALLET = "WALLET"
@@ -86,8 +98,8 @@ class User(TimestampMixin, db.Model):
             "nickname": self.nickname,
             "profileImageUrl": self.profile_image_url,
             "isActive": self.is_active,
-            "createdAt": self.created_at.isoformat(),
-            "updatedAt": self.updated_at.isoformat(),
+            "createdAt": _iso_utc(self.created_at),
+            "updatedAt": _iso_utc(self.updated_at),
         }
 
 
@@ -130,14 +142,14 @@ class LostPost(TimestampMixin, db.Model):
             "category": self.category.value,
             "color": self.color,
             "location": self.location,
-            "lostAt": self.lost_at.isoformat(),
+            "lostAt": _iso_utc(self.lost_at),
             "features": self.features,
             "description": self.description,
             "imageUrl": self.image_url,
             "contactMethod": self.contact_method,
             "status": self.status,
-            "createdAt": self.created_at.isoformat(),
-            "updatedAt": self.updated_at.isoformat(),
+            "createdAt": _iso_utc(self.created_at),
+            "updatedAt": _iso_utc(self.updated_at),
         }
         if include_private:
             data["privateFeature"] = self.private_feature
@@ -188,14 +200,14 @@ class FoundPost(TimestampMixin, db.Model):
             "category": self.category.value,
             "color": self.color,
             "location": self.location,
-            "foundAt": self.found_at.isoformat(),
+            "foundAt": _iso_utc(self.found_at),
             "features": self.features,
             "description": self.description,
             "contentGenerator": self.content_generator,
             "imageUrl": self.image_url,
             "status": self.status,
-            "createdAt": self.created_at.isoformat(),
-            "updatedAt": self.updated_at.isoformat(),
+            "createdAt": _iso_utc(self.created_at),
+            "updatedAt": _iso_utc(self.updated_at),
         }
         if include_private:
             data["storageLocation"] = self.storage_location
@@ -258,13 +270,13 @@ class Match(TimestampMixin, db.Model):
             "modelVersion": self.model_version,
             "status": self.status,
             "chatRoomId": self.chat_room.id if self.chat_room else None,
-            "claimedAt": self.claimed_at.isoformat() if self.claimed_at else None,
+            "claimedAt": _iso_utc(self.claimed_at) if self.claimed_at else None,
             "confirmedBy": self.confirmed_by,
-            "confirmedAt": self.confirmed_at.isoformat() if self.confirmed_at else None,
+            "confirmedAt": _iso_utc(self.confirmed_at) if self.confirmed_at else None,
             "rejectionReason": self.rejection_reason,
-            "handedOverAt": (self.handed_over_at.isoformat() if self.handed_over_at else None),
-            "createdAt": self.created_at.isoformat(),
-            "updatedAt": self.updated_at.isoformat(),
+            "handedOverAt": (_iso_utc(self.handed_over_at) if self.handed_over_at else None),
+            "createdAt": _iso_utc(self.created_at),
+            "updatedAt": _iso_utc(self.updated_at),
         }
         if include_posts:
             data["lostPost"] = self.lost_post.to_dict()
@@ -345,5 +357,5 @@ class ChatMessage(db.Model):
             },
             "content": self.content,
             "clientMessageId": self.client_message_id,
-            "createdAt": self.created_at.isoformat(),
+            "createdAt": _iso_utc(self.created_at),
         }

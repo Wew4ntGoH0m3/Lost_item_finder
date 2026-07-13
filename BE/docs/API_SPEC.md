@@ -280,6 +280,22 @@ LLM에 전달하는 `sourceFacts`는 아래 다섯 필드로 제한한다. `obse
 
 서버는 필수 장소·색상·카테고리가 결과에 포함되는지, 출력 숫자가 입력에 존재하는 숫자인지, 필드 길이가 DB 제약을 만족하는지 검증한다. 실패·타임아웃·잘못된 JSON·근거 검증 실패 시 `grounded-template-v1`을 사용한다.
 
+### 사진 기반 자동 판별 (`category`/`color` 생략 시)
+
+요청에 `category`와 `color`를 모두 생략하면 서버는 `imageUrl`이 가리키는 업로드된 이미지 파일을 읽어 Base64로 인코딩하고, Ollama Vision 요청의 `messages[1].images`에 넣어 함께 전달한다. `sourceFacts`는 `location`, `foundAt`, `observations`(선택)만 포함한다.
+
+```json
+{
+  "sourceFacts": {
+    "location": "강당 입구",
+    "foundAt": "2026-07-13T14:15:00+00:00",
+    "observations": "모서리에 흠집"
+  }
+}
+```
+
+응답 JSON Schema는 `category`(`ItemCategory` Enum 중 하나), `color`, `title`, `features`, `description`을 모두 요구한다. 서버는 `category`가 유효한 Enum 값인지, `color`가 짧은 영문/한글 코드인지, 장소 키워드 포함 여부와 숫자 근거를 기존과 동일하게 검증한다. 검증에 실패하면 `category=ETC`, `color=UNKNOWN`으로 대체 생성기 `grounded-template-v1`을 사용한다. `category`와 `color` 중 하나만 보내면 `422 VALIDATION_FAILED`로 거절하고, 둘 다 생략했는데 `imageUrl`이 없어도 동일하게 거절한다.
+
 ### 매칭 점수
 
 | 항목 | 배점 | 기준 |

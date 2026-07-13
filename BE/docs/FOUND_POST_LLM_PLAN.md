@@ -118,13 +118,14 @@ Authorization: Bearer {accessToken}
 3. 앱이 Access Token과 Refresh Token을 안전한 저장소에 보관한다.
 4. 이후 모든 보호 API에 `Authorization: Bearer {accessToken}`을 전송한다.
 5. Access Token 만료 시 Refresh Token으로 갱신하고 실패하면 로그인 화면으로 이동한다.
-6. 습득글 화면에서 카테고리, 색상, 발견 위치, 발견 시간, 보관 위치를 입력한다.
+6. 습득글 화면에서 발견 위치와 보관 위치를 입력한다. 발견 시간은 선택 입력이며 비우면 현재 시각이 사용된다.
 7. 눈으로 확인한 공개 특징이 있으면 `observations`에 입력한다.
 8. 사진은 별도 이미지 업로드 API로 전송하고 반환된 URL을 받는다.
-9. 앱이 습득글 생성 API를 호출한다. 제목, 특징, 설명은 보내지 않는다.
-10. 서버가 공개 입력 사실만 Ollama에 전달한다.
-11. 서버가 LLM 결과를 검증하고 습득글을 저장한다.
-12. 앱은 응답의 자동 생성 글을 상세 화면에 표시한다.
+9. 카테고리와 색상을 직접 알고 있으면 함께 입력하고, 모르면 둘 다 비운다. 둘 중 하나만 입력하면 거절된다.
+10. 앱이 습득글 생성 API를 호출한다. 제목, 특징, 설명은 보내지 않는다.
+11. 카테고리·색상을 입력했으면 서버가 텍스트 사실만 Ollama에 전달하고, 비웠으면 업로드된 사진과 위치·시간·관찰 정보를 Ollama Vision에 전달해 카테고리·색상까지 판별한다. 카테고리·색상을 비웠는데 `imageUrl`이 없으면 거절된다.
+12. 서버가 LLM 결과를 검증하고 습득글을 저장한다.
+13. 앱은 응답의 자동 생성 글을 상세 화면에 표시한다.
 
 ## 6. 습득글 생성 API
 
@@ -134,7 +135,7 @@ Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
 
-요청 예시:
+요청 예시 (카테고리·색상을 직접 아는 경우):
 
 ```json
 {
@@ -149,6 +150,19 @@ Content-Type: application/json
   "imageUrl": "/uploads/example.jpg"
 }
 ```
+
+요청 예시 (사진으로 자동 판별하는 경우, `category`/`color` 생략):
+
+```json
+{
+  "location": "강당 입구",
+  "storageLocation": "학생회실",
+  "observations": "모서리에 흠집",
+  "imageUrl": "/uploads/example.jpg"
+}
+```
+
+`category`/`color`를 생략하면 `imageUrl`이 필수이며 `foundAt`도 생략할 수 있다(서버가 현재 시각을 사용).
 
 앱이 보내지 않는 필드:
 
@@ -182,7 +196,7 @@ Content-Type: application/json
 
 ## 7. LLM 전달 정보
 
-LLM에는 아래 공개 사실만 전달한다.
+카테고리·색상을 직접 입력한 경우 LLM에는 아래 공개 사실만 전달한다.
 
 | 필드 | 필수 | 설명 |
 |---|---:|---|
@@ -192,13 +206,22 @@ LLM에는 아래 공개 사실만 전달한다.
 | `foundAt` | Y | UTC ISO 8601 발견 시간 |
 | `observations` | N | 사용자가 직접 확인한 공개 특징 |
 
-LLM에 전달하지 않는 정보:
+카테고리·색상을 생략한 경우(사진 기반 자동 판별)에는 아래 사실과 이미지 바이너리를 함께 전달한다.
+
+| 필드 | 필수 | 설명 |
+|---|---:|---|
+| 이미지 바이너리 | Y | `imageUrl`이 가리키는 업로드된 사진 |
+| `location` | Y | 발견 위치 |
+| `foundAt` | Y | UTC ISO 8601 발견 시간 |
+| `observations` | N | 사용자가 직접 확인한 공개 특징 |
+
+두 경우 모두 LLM에 전달하지 않는 정보:
 
 - `storageLocation`
 - `privateFeature`
 - `verificationQuestion`
 - 사용자 ID, 연락 정보
-- `imageUrl` 및 이미지 바이너리
+- `imageUrl` 문자열 자체(사진 기반 판별 시에는 파일 바이너리만 전달)
 
 ## 8. Ollama 요청 정책
 
@@ -243,7 +266,7 @@ LLM에 전달하지 않는 정보:
 설명: {foundAt}에 {location}에서 발견했습니다.
 ```
 
-## 10. 이미지 전송 방식
+## 10. 이미지 전송 방식과 사진 기반 자동 분석
 
 모바일 앱에서 이미지를 Base64로 전송하지 않는다.
 
@@ -255,7 +278,12 @@ Content-Type: multipart/form-data
 
 `image` 파일 필드로 JPEG, PNG, WebP를 업로드한다. 서버는 최대 10MB, 확장자, MIME 타입을 검사하고 EC2 영구 경로에 저장한 뒤 `/uploads/{fileName}` URL을 반환한다.
 
-현재 자동 글 작성은 이미지 분석 기능이 아니다. 이미지 URL과 파일 데이터는 LLM에 전달하지 않으며, 게시글 표시용으로만 사용한다.
+습득글 생성 요청에 `category`와 `color`를 함께 생략하면, 서버는 반드시 `imageUrl`을 요구하고 해당 이미지 파일을 읽어 Ollama Vision(`qwen3-vl:4b`)에 `location`, `foundAt`, `observations`와 함께 전달한다. LLM은 `category`(`ItemCategory` Enum 중 하나), `color`, `title`, `features`, `description`을 함께 생성한다. `category`, `color` 중 하나만 보내면 `422 VALIDATION_FAILED`로 거절한다.
+
+- `category`/`color`를 모두 보내면 기존과 동일하게 텍스트 사실 기반 생성(§7~§9)을 사용하며 이미지는 분석에 사용하지 않는다.
+- `category`/`color`를 모두 생략하면 이미지 기반 자동 분석을 사용하며, 생성기 값은 `ollama-vision:qwen3-vl:4b` 또는 실패 시 대체 생성기 `grounded-template-v1`이다. 대체 생성기 사용 시 `category`는 `ETC`, `color`는 `UNKNOWN`으로 저장된다.
+- 이미지 기반 분석에서도 보관 위치, 비공개 특징, 확인 질문, 사용자 ID는 LLM에 전달하지 않는다.
+- `foundAt`을 생략하면 서버가 요청 수신 시각(UTC)을 사용한다. `storageLocation`은 사진으로 알 수 없는 운영 정보이므로 계속 필수 입력이다.
 
 ## 11. 데이터 저장
 

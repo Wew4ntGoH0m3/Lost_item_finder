@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import re
@@ -33,6 +34,19 @@ CONTENT_SCHEMA = {
         "description": {"type": "string"},
     },
     "required": ["title", "features", "description"],
+    "additionalProperties": False,
+}
+
+IMAGE_CONTENT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "category": {"type": "string", "enum": [item.value for item in ItemCategory]},
+        "color": {"type": "string"},
+        "title": {"type": "string"},
+        "features": {"type": "string"},
+        "description": {"type": "string"},
+    },
+    "required": ["category", "color", "title", "features", "description"],
     "additionalProperties": False,
 }
 
@@ -154,4 +168,124 @@ def generate_found_post_content(facts: dict[str, str]) -> tuple[dict[str, str], 
             return content, f"ollama:{current_app.config['OLLAMA_MODEL']}"
     except (httpx.HTTPError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         logger.exception("LLM found-post generation failed; using grounded template")
+    return fallback, "grounded-template-v1"
+
+
+def build_found_image_facts(location: str, found_at: datetime, observations: str) -> dict[str, str]:
+    facts = {
+        "location": location.strip(),
+        "foundAt": found_at.astimezone(timezone.utc).isoformat(),
+    }
+    if observations:
+        facts["observations"] = observations
+    return facts
+
+
+def _grounded_image_template(facts: dict[str, str]) -> dict:
+    title = f"{facts['location']}에서 발견된 물품"
+    features = facts.get("observations") or "사진을 확인해 주세요."
+    found_at = datetime.fromisoformat(facts["foundAt"]).astimezone(timezone.utc)
+    description = (
+        f"{found_at:%Y-%m-%d %H:%M UTC}에 {facts['location']}에서 발견했습니다. "
+        "사진을 참고해 주세요."
+    )
+    return {
+        "category": ItemCategory.ETC,
+        "color": "UNKNOWN",
+        "title": title[:100].rstrip(),
+        "features": features[:2000].rstrip(),
+        "description": description[:2000].rstrip(),
+    }
+
+
+def _validate_generated_image_content(raw, facts: dict[str, str]) -> dict | None:
+    if not isinstance(raw, dict) or set(raw) != {
+        "category",
+        "color",
+        "title",
+        "features",
+        "description",
+    }:
+        return None
+    if not all(isinstance(raw[field], str) for field in raw):
+        return None
+
+    try:
+        category = ItemCategory(raw["category"].strip().upper())
+    except ValueError:
+        return None
+
+    color = raw["color"].strip().upper()
+    if not color or len(color) > 30 or not re.fullmatch(r"[0-9A-Z가-힣 ]+", color):
+        return None
+
+    text_fields = {field: raw[field].strip() for field in ("title", "features", "description")}
+    if not text_fields["title"] or len(text_fields["title"]) > 100:
+        return None
+    if not text_fields["features"] or len(text_fields["features"]) > 2000:
+        return None
+    if not text_fields["description"] or len(text_fields["description"]) > 2000:
+        return None
+
+    combined = _normalize(" ".join(text_fields.values()))
+    location_term = _normalize(facts["location"])
+    if location_term and location_term not in combined:
+        return None
+
+    source_numbers = {
+        str(int(value)) for value in re.findall(r"\d+", " ".join(facts.values()))
+    }
+    generated_numbers = {
+        str(int(value)) for value in re.findall(r"\d+", " ".join(text_fields.values()))
+    }
+    if not generated_numbers.issubset(source_numbers):
+        return None
+
+    return {"category": category, "color": color, **text_fields}
+
+
+def generate_found_post_content_from_image(
+    image_bytes: bytes, facts: dict[str, str]
+) -> tuple[dict, str]:
+    fallback = _grounded_image_template(facts)
+    if not current_app.config["OLLAMA_ENABLED"]:
+        return fallback, "grounded-template-v1"
+
+    category_options = ", ".join(item.value for item in ItemCategory)
+    system_prompt = (
+        "당신은 습득물 게시글 작성기입니다. 첨부된 사진과 sourceFacts JSON에 실제로 존재하는 "
+        f"정보만 사용해 category({category_options} 중 하나), color, 한국어 title, features, "
+        "description을 작성하세요. 사진에서 직접 확인할 수 없는 브랜드, 모델, 소유자, 손상, "
+        "내용물, 발견 경위 등을 추측하거나 추가하지 마세요. sourceFacts에 없는 정보는 언급하지 "
+        "마세요. JSON 외에는 출력하지 마세요."
+    )
+    image_b64 = base64.b64encode(image_bytes).decode("ascii")
+    request_body = {
+        "model": current_app.config["OLLAMA_MODEL"],
+        "stream": False,
+        "think": False,
+        "format": IMAGE_CONTENT_SCHEMA,
+        "options": {"temperature": 0},
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": json.dumps({"sourceFacts": facts}, ensure_ascii=False),
+                "images": [image_b64],
+            },
+        ],
+    }
+    url = f"{current_app.config['OLLAMA_BASE_URL'].rstrip('/')}/api/chat"
+    try:
+        with httpx.Client(timeout=current_app.config["OLLAMA_CONTENT_TIMEOUT_SECONDS"]) as client:
+            response = client.post(url, json=request_body)
+            response.raise_for_status()
+        message = response.json()["message"]
+        response_content = message.get("content") or message.get("thinking")
+        raw = json.loads(_strip_code_fence(response_content))
+        content = _validate_generated_image_content(raw, facts)
+        if content:
+            return content, f"ollama-vision:{current_app.config['OLLAMA_MODEL']}"
+    except (httpx.HTTPError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        logger.exception("LLM found-post image analysis failed; using grounded template")
     return fallback, "grounded-template-v1"

@@ -5,13 +5,67 @@
       "name": "Codex",
       "version": "1.0"
     },
+    "pages": [
+      {
+        "startedDateTime": "2026-07-13T04:40:00.000Z",
+        "id": "page_lostlink_flask_api",
+        "title": "LostLink Flask API",
+        "pageTimings": {}
+      }
+    ],
     "entries": [
       {
-        "startedDateTime": "2026-07-13T04:33:17.395Z",
-        "time": 11677.605,
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:00.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/healthz",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Health check",
+        "_description": "API and database-independent liveness check.",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:01.000Z",
+        "time": 0,
         "request": {
           "method": "POST",
-          "url": "http://100.102.0.2:11434/api/chat",
+          "url": "http://13.124.179.95/api/v1/auth/signup",
           "httpVersion": "HTTP/1.1",
           "cookies": [],
           "headers": [
@@ -25,40 +79,1440 @@
             }
           ],
           "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\"model\":\"qwen3:4b\",\"stream\":false,\"think\":false,\"format\":\"json\",\"messages\":[{\"role\":\"system\",\"content\":\"Return only valid JSON with keys ok and model.\"},{\"role\":\"user\",\"content\":\"Connection test. Set ok to true and model to qwen3:4b.\"}]}"
-          },
-          "headersSize": -1,
-          "bodySize": 238
+            "text": "{\"email\":\"owner@example.com\",\"password\":\"Password123!\",\"nickname\":\"분실자\",\"siteCode\":\"SCHOOL_001\"}"
+          }
         },
         "response": {
-          "status": 200,
-          "statusText": "OK",
+          "status": 0,
+          "statusText": "",
           "httpVersion": "HTTP/1.1",
           "cookies": [],
-          "headers": [
-            {
-              "name": "Content-Type",
-              "value": "application/json; charset=utf-8"
-            }
-          ],
+          "headers": [],
           "content": {
-            "size": 346,
+            "size": 0,
             "mimeType": "application/json",
-            "text": "{\"model\":\"qwen3:4b\",\"created_at\":\"2026-07-13T04:33:29.073200369Z\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n  \\\"ok\\\": true,\\n  \\\"model\\\": \\\"qwen3:4b\\\"\\n}\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":11677604946,\"load_duration\":3428511137,\"prompt_eval_count\":42,\"prompt_eval_duration\":461098000,\"eval_count\":21,\"eval_duration\":7786334000}"
+            "text": ""
           },
           "redirectURL": "",
           "headersSize": -1,
-          "bodySize": 346
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
         },
         "cache": {},
         "timings": {
           "send": 0,
-          "wait": 11677.605,
+          "wait": 0,
           "receive": 0
-        }
+        },
+        "_name": "Sign up",
+        "_description": "",
+        "_expectedStatus": 201
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:02.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/auth/login",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"email\":\"owner@example.com\",\"password\":\"Password123!\",\"device\":{\"platform\":\"ANDROID\",\"pushToken\":\"sample-fcm-token\"}}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Log in",
+        "_description": "Save data.accessToken and data.refreshToken from the response.",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:03.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/auth/refresh",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{refreshToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Refresh access token",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:04.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/auth/logout",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Log out",
+        "_description": "",
+        "_expectedStatus": 204
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:05.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/users/me",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Get my profile",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:06.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/users/me",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"nickname\":\"새닉네임\",\"profileImageUrl\":\"/uploads/{{imageFileName}}\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Update my profile",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:07.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/users/me/push-token",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"platform\":\"ANDROID\",\"pushToken\":\"sample-fcm-token\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Register push token",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:08.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/uploads/images",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{accessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "multipart/form-data"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "multipart/form-data",
+            "params": [
+              {
+                "name": "image",
+                "value": "",
+                "fileName": "{{imagePath}}",
+                "contentType": "image/jpeg"
+              }
+            ]
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Upload post image",
+        "_description": "Choose a JPEG, PNG, or WebP file for the image form field.",
+        "_expectedStatus": 201
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:09.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/uploads/{{imageFileName}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Download uploaded image",
+        "_description": "Use data.fileName returned by the image upload request.",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:10.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/lost-posts",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"siteCode\":\"SCHOOL_001\",\"title\":\"검정 에어팟 케이스 잃어버림\",\"category\":\"EARPHONE\",\"color\":\"BLACK\",\"location\":\"체육관\",\"lostAt\":\"2026-07-13T14:00:00Z\",\"features\":\"작은 흰색 별 스티커\",\"privateFeature\":\"안쪽에 K 이니셜\",\"description\":\"체육 수업 후 잃어버림\",\"imageUrl\":\"/uploads/{{imageFileName}}\",\"contactMethod\":\"NOTIFICATION\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Create lost post",
+        "_description": "Queues automatic matching after the post is created.",
+        "_expectedStatus": 201
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:11.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/lost-posts?siteCode=SCHOOL_001&category=EARPHONE&status=OPEN&page=1&size=20",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [
+            {
+              "name": "siteCode",
+              "value": "SCHOOL_001"
+            },
+            {
+              "name": "category",
+              "value": "EARPHONE"
+            },
+            {
+              "name": "status",
+              "value": "OPEN"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            },
+            {
+              "name": "size",
+              "value": "20"
+            }
+          ],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "List lost posts",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:12.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/lost-posts/{{lostPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Get lost post",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:13.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/lost-posts/{{lostPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"title\":\"검정 에어팟 케이스 분실\",\"features\":\"작은 흰색 별 스티커와 측면 흠집\",\"lostAt\":\"2026-07-13T14:00:00Z\",\"contactMethod\":\"NOTIFICATION\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Update lost post",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:14.000Z",
+        "time": 0,
+        "request": {
+          "method": "DELETE",
+          "url": "http://13.124.179.95/api/v1/lost-posts/{{lostPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Delete lost post",
+        "_description": "",
+        "_expectedStatus": 204
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:15.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/lost-posts/{{lostPostId}}/matches/analyze",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Analyze lost-post matches",
+        "_description": "",
+        "_expectedStatus": 202
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:16.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/found-posts",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"siteCode\":\"SCHOOL_001\",\"title\":\"체육관에서 검정 이어폰 케이스 주움\",\"category\":\"EARPHONE_CASE\",\"color\":\"BLACK\",\"location\":\"체육관 입구\",\"foundAt\":\"2026-07-13T14:20:00Z\",\"storageLocation\":\"학생회실\",\"features\":\"작은 흰색 별 스티커\",\"privateFeature\":\"안쪽에 K 이니셜\",\"verificationQuestion\":\"스티커 모양은 무엇인가요?\",\"description\":\"신발장 앞에서 발견\",\"imageUrl\":\"/uploads/{{imageFileName}}\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Create found post",
+        "_description": "Queues automatic matching after the post is created.",
+        "_expectedStatus": 201
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:17.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/found-posts?siteCode=SCHOOL_001&category=EARPHONE_CASE&status=STORED&page=1&size=20",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [
+            {
+              "name": "siteCode",
+              "value": "SCHOOL_001"
+            },
+            {
+              "name": "category",
+              "value": "EARPHONE_CASE"
+            },
+            {
+              "name": "status",
+              "value": "STORED"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            },
+            {
+              "name": "size",
+              "value": "20"
+            }
+          ],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "List found posts",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:18.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/found-posts/{{foundPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Get found post",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:19.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/found-posts/{{foundPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"title\":\"체육관 입구에서 검정 이어폰 케이스 주움\",\"storageLocation\":\"학생회실 분실물함\",\"features\":\"작은 흰색 별 스티커와 측면 흠집\",\"foundAt\":\"2026-07-13T14:20:00Z\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Update found post",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:20.000Z",
+        "time": 0,
+        "request": {
+          "method": "DELETE",
+          "url": "http://13.124.179.95/api/v1/found-posts/{{foundPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Delete found post",
+        "_description": "",
+        "_expectedStatus": 204
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:21.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/matches/lost-posts/{{lostPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "List matches for lost post",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:22.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/matches/found-posts/{{foundPostId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "List matches for found post",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:23.000Z",
+        "time": 0,
+        "request": {
+          "method": "GET",
+          "url": "http://13.124.179.95/api/v1/matches/{{matchId}}",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Get match details",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:24.000Z",
+        "time": 0,
+        "request": {
+          "method": "POST",
+          "url": "http://13.124.179.95/api/v1/matches/{{matchId}}/claims",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"answer\":\"흰색 별 모양입니다.\",\"message\":\"제 물건 같습니다.\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Claim matched item",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:25.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/matches/{{matchId}}/verify",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{finderAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Verify claim",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:26.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/matches/{{matchId}}/reject",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ownerAccessToken}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"reason\":\"제 물건의 특징과 다릅니다.\"}"
+          }
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Reject match or claim",
+        "_description": "",
+        "_expectedStatus": 200
+      },
+      {
+        "pageref": "page_lostlink_flask_api",
+        "startedDateTime": "2026-07-13T04:40:27.000Z",
+        "time": 0,
+        "request": {
+          "method": "PATCH",
+          "url": "http://13.124.179.95/api/v1/matches/{{matchId}}/handover",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{adminAccessToken}}"
+            }
+          ],
+          "queryString": [],
+          "headersSize": -1,
+          "bodySize": -1
+        },
+        "response": {
+          "status": 0,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "cookies": [],
+          "headers": [],
+          "content": {
+            "size": 0,
+            "mimeType": "application/json",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_note": "Template request. Send it to capture a response."
+        },
+        "cache": {},
+        "timings": {
+          "send": 0,
+          "wait": 0,
+          "receive": 0
+        },
+        "_name": "Complete handover",
+        "_description": "",
+        "_expectedStatus": 200
       }
-    ]
+    ],
+    "_comment": "Complete request template for the LostLink Flask backend. Replace {{...}} placeholders before sending protected or resource-specific requests.",
+    "_variables": {
+      "baseUrl": "http://13.124.179.95",
+      "accessToken": "Access token returned by POST /api/v1/auth/login",
+      "refreshToken": "Refresh token returned by POST /api/v1/auth/login",
+      "ownerAccessToken": "Access token for the lost-post owner",
+      "finderAccessToken": "Access token for the found-post owner",
+      "adminAccessToken": "Access token for an ADMIN user",
+      "lostPostId": "LostPost ID",
+      "foundPostId": "FoundPost ID",
+      "matchId": "Match ID",
+      "imagePath": "Local JPEG, PNG, or WebP path",
+      "imageFileName": "fileName returned by POST /api/v1/uploads/images"
+    }
   }
 }

@@ -21,11 +21,10 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 @bp.post("/signup")
 def signup():
     payload = body()
-    require_fields(payload, ["email", "password", "nickname", "siteCode"])
+    require_fields(payload, ["email", "password", "nickname"])
     email = payload["email"].strip().lower()
     password = payload["password"]
     nickname = payload["nickname"].strip()
-    site_code = payload["siteCode"].strip().upper()
 
     details = []
     if not EMAIL_RE.match(email):
@@ -34,8 +33,6 @@ def signup():
         details.append({"field": "password", "reason": "8~64자로 입력해 주세요."})
     if not 2 <= len(nickname) <= 20:
         details.append({"field": "nickname", "reason": "2~20자로 입력해 주세요."})
-    if not site_code or len(site_code) > 50:
-        details.append({"field": "siteCode", "reason": "시설 코드를 확인해 주세요."})
     if details:
         raise ApiError("VALIDATION_FAILED", "입력값을 확인해 주세요.", 422, details)
     if db.session.scalar(db.select(User).where(User.email == email)):
@@ -45,7 +42,6 @@ def signup():
         email=email,
         password_hash=generate_password_hash(password),
         nickname=nickname,
-        site_code=site_code,
     )
     db.session.add(user)
     db.session.commit()

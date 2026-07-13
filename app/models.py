@@ -65,7 +65,6 @@ class User(TimestampMixin, db.Model):
     email: Mapped[str] = mapped_column(db.String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(db.String(255))
     nickname: Mapped[str] = mapped_column(db.String(20))
-    site_code: Mapped[str] = mapped_column(db.String(50), index=True)
     profile_image_url: Mapped[str | None] = mapped_column(db.String(500))
     is_active: Mapped[bool] = mapped_column(default=True)
 
@@ -85,7 +84,6 @@ class User(TimestampMixin, db.Model):
             "id": self.id,
             "email": self.email,
             "nickname": self.nickname,
-            "siteCode": self.site_code,
             "profileImageUrl": self.profile_image_url,
             "isActive": self.is_active,
             "createdAt": self.created_at.isoformat(),
@@ -99,7 +97,6 @@ class LostPost(TimestampMixin, db.Model):
         db.CheckConstraint(ITEM_CATEGORY_CHECK, name="ck_lost_posts_category_enum"),
         Index(
             "ix_lost_post_match_candidates",
-            "site_code",
             "status",
             "category",
             "lost_at",
@@ -108,7 +105,6 @@ class LostPost(TimestampMixin, db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(db.ForeignKey("users.id"), index=True)
-    site_code: Mapped[str] = mapped_column(db.String(50), index=True)
     title: Mapped[str] = mapped_column(db.String(100))
     category: Mapped[ItemCategory] = mapped_column(ITEM_CATEGORY_TYPE, index=True)
     color: Mapped[str] = mapped_column(db.String(30), index=True)
@@ -130,7 +126,6 @@ class LostPost(TimestampMixin, db.Model):
         data = {
             "id": self.id,
             "userId": self.user_id,
-            "siteCode": self.site_code,
             "title": self.title,
             "category": self.category.value,
             "color": self.color,
@@ -155,7 +150,6 @@ class FoundPost(TimestampMixin, db.Model):
         db.CheckConstraint(ITEM_CATEGORY_CHECK, name="ck_found_posts_category_enum"),
         Index(
             "ix_found_post_match_candidates",
-            "site_code",
             "status",
             "category",
             "found_at",
@@ -164,7 +158,6 @@ class FoundPost(TimestampMixin, db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(db.ForeignKey("users.id"), index=True)
-    site_code: Mapped[str] = mapped_column(db.String(50), index=True)
     title: Mapped[str] = mapped_column(db.String(100))
     category: Mapped[ItemCategory] = mapped_column(ITEM_CATEGORY_TYPE, index=True)
     color: Mapped[str] = mapped_column(db.String(30), index=True)
@@ -191,7 +184,6 @@ class FoundPost(TimestampMixin, db.Model):
         data = {
             "id": self.id,
             "userId": self.user_id,
-            "siteCode": self.site_code,
             "title": self.title,
             "category": self.category.value,
             "color": self.color,

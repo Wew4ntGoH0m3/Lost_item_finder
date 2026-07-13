@@ -32,7 +32,6 @@ def signup(client, email, nickname="사용자"):
             "email": email,
             "password": "StrongPass123!",
             "nickname": nickname,
-            "siteCode": "SCHOOL_001",
         },
     )
     assert response.status_code == 201

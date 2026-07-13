@@ -17,7 +17,6 @@ from ..utils import (
 
 bp = Blueprint("lost_posts", __name__)
 REQUIRED = [
-    "siteCode",
     "title",
     "category",
     "color",
@@ -43,13 +42,8 @@ def create_lost_post():
     user = current_user()
     payload = body()
     require_fields(payload, REQUIRED)
-    site_code = str(payload["siteCode"]).strip().upper()
-    if site_code != user.site_code:
-        raise ApiError("FORBIDDEN", "소속 시설에만 게시글을 등록할 수 있습니다.", 403)
-
     post = LostPost(
         user_id=user.id,
-        site_code=site_code,
         title=str(payload["title"]).strip(),
         category=parse_category(payload["category"]),
         color=str(payload["color"]).strip().upper(),
@@ -75,7 +69,6 @@ def list_lost_posts():
     page, size = page_args()
     statement = db.select(LostPost)
     for param, column in {
-        "siteCode": LostPost.site_code,
         "location": LostPost.location,
         "status": LostPost.status,
     }.items():

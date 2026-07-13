@@ -4,7 +4,6 @@ import json
 from conftest import auth, login, signup
 
 FOUND_PAYLOAD = {
-    "siteCode": "SCHOOL_001",
     "category": "EARPHONE",
     "color": "BLACK",
     "location": "체육관 입구",
@@ -16,7 +15,6 @@ FOUND_PAYLOAD = {
 }
 
 LOST_PAYLOAD = {
-    "siteCode": "SCHOOL_001",
     "title": "검정 에어팟 케이스 잃어버림",
     "category": "EARPHONE",
     "color": "BLACK",
@@ -81,8 +79,10 @@ def test_postman_signup_login_and_jwt_protection(client):
     )
     assert unauthorized.status_code == 401
     assert authorized.status_code == 201
+    assert "siteCode" not in authorized.get_json()["data"]["post"]
     assert "role" not in user
     assert "platform" not in user
+    assert "siteCode" not in user
 
 
 def test_logout_is_client_side_only(client):
@@ -115,6 +115,8 @@ def test_one_user_can_create_both_lost_and_found_posts(client):
     )
 
     assert lost["userId"] == found["userId"]
+    assert "siteCode" not in lost
+    assert "siteCode" not in found
     assert get_lost_matches(client, lost["id"], token) == []
 
 

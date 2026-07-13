@@ -53,7 +53,7 @@
             "description": "앱에서는 호출하지 않는 Postman 시연 계정 생성 요청입니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman사용자A\",\n  \"siteCode\": \"{{siteCode}}\"\n}",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman사용자A\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -106,7 +106,7 @@
             "description": "앱에서는 호출하지 않는 Postman 시연 계정 생성 요청입니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman사용자B\",\n  \"siteCode\": \"{{siteCode}}\"\n}",
+              "raw": "{\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman사용자B\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -527,7 +527,7 @@
             "description": "title, features, description은 보내지 않습니다. 서버가 공개 입력 사실만으로 자동 생성합니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"siteCode\": \"{{siteCode}}\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
+              "raw": "{\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -580,7 +580,7 @@
             "description": "비교 제외용 WALLET 글도 동일한 자동 작성 흐름을 사용합니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"siteCode\": \"{{siteCode}}\",\n  \"category\": \"WALLET\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
+              "raw": "{\n  \"category\": \"WALLET\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -612,7 +612,7 @@
             "auth": {
               "type": "noauth"
             },
-            "url": "{{baseUrl}}/api/v1/found-posts?siteCode={{siteCode}}&category=CARD&status=STORED&page=1&size=20",
+            "url": "{{baseUrl}}/api/v1/found-posts?category=CARD&status=STORED&page=1&size=20",
             "description": ""
           },
           "response": []
@@ -748,7 +748,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"siteCode\": \"{{siteCode}}\",\n  \"title\": \"파란 학생증 잃어버림\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당\",\n  \"lostAt\": \"2026-07-13T14:00:00Z\",\n  \"features\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"description\": \"행사 종료 후 확인\",\n  \"imageUrl\": \"{{imageUrl}}\",\n  \"contactMethod\": \"CHAT\"\n}",
+              "raw": "{\n  \"title\": \"파란 학생증 잃어버림\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당\",\n  \"lostAt\": \"2026-07-13T14:00:00Z\",\n  \"features\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"description\": \"행사 종료 후 확인\",\n  \"imageUrl\": \"{{imageUrl}}\",\n  \"contactMethod\": \"CHAT\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -780,7 +780,7 @@
             "auth": {
               "type": "noauth"
             },
-            "url": "{{baseUrl}}/api/v1/lost-posts?siteCode={{siteCode}}&category=CARD&status=OPEN&page=1&size=20",
+            "url": "{{baseUrl}}/api/v1/lost-posts?category=CARD&status=OPEN&page=1&size=20",
             "description": ""
           },
           "response": []
@@ -1505,11 +1505,6 @@
     {
       "key": "baseUrl",
       "value": "http://13.124.179.95",
-      "type": "string"
-    },
-    {
-      "key": "siteCode",
-      "value": "SCHOOL_001",
       "type": "string"
     },
     {

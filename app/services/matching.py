@@ -111,7 +111,6 @@ def _candidate_query(lost: LostPost, candidate_ids=None):
     statement = (
         db.select(FoundPost)
         .where(
-            FoundPost.site_code == lost.site_code,
             FoundPost.status == "STORED",
             FoundPost.category == lost.category,
             FoundPost.user_id != lost.user_id,
@@ -181,7 +180,6 @@ def analyze_found_post(found_post_id: int) -> dict:
     statement = (
         db.select(LostPost.id)
         .where(
-            LostPost.site_code == found.site_code,
             LostPost.status == "OPEN",
             LostPost.category == found.category,
             LostPost.user_id != found.user_id,

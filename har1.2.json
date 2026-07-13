@@ -83,7 +83,7 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\n  \"email\": \"user-a@example.com\",\n  \"password\": \"StrongPass123!\",\n  \"nickname\": \"사용자A\",\n  \"siteCode\": \"SCHOOL_001\"\n}",
+            "text": "{\n  \"email\": \"user-a@example.com\",\n  \"password\": \"StrongPass123!\",\n  \"nickname\": \"사용자A\"\n}",
             "params": []
           }
         },
@@ -502,7 +502,7 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\n  \"siteCode\": \"SCHOOL_001\",\n  \"title\": \"학생증 잃어버림\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당\",\n  \"lostAt\": \"2026-07-13T14:00:00Z\",\n  \"features\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"description\": \"행사 종료 후 확인\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
+            "text": "{\n  \"title\": \"학생증 잃어버림\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당\",\n  \"lostAt\": \"2026-07-13T14:00:00Z\",\n  \"features\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"description\": \"행사 종료 후 확인\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
             "params": []
           }
         },
@@ -538,7 +538,7 @@
         "time": 0,
         "request": {
           "method": "GET",
-          "url": "http://13.124.179.95/api/v1/lost-posts?siteCode=SCHOOL_001&category=CARD&status=OPEN&page=1&size=20",
+          "url": "http://13.124.179.95/api/v1/lost-posts?category=CARD&status=OPEN&page=1&size=20",
           "httpVersion": "HTTP/1.1",
           "cookies": [],
           "headers": [
@@ -548,10 +548,6 @@
             }
           ],
           "queryString": [
-            {
-              "name": "siteCode",
-              "value": "SCHOOL_001"
-            },
             {
               "name": "category",
               "value": "CARD"
@@ -831,7 +827,7 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\n  \"siteCode\": \"SCHOOL_001\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:15:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는?\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
+            "text": "{\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:15:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는?\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
             "params": []
           }
         },
@@ -867,7 +863,7 @@
         "time": 0,
         "request": {
           "method": "GET",
-          "url": "http://13.124.179.95/api/v1/found-posts?siteCode=SCHOOL_001&category=CARD&status=STORED&page=1&size=20",
+          "url": "http://13.124.179.95/api/v1/found-posts?category=CARD&status=STORED&page=1&size=20",
           "httpVersion": "HTTP/1.1",
           "cookies": [],
           "headers": [
@@ -877,10 +873,6 @@
             }
           ],
           "queryString": [
-            {
-              "name": "siteCode",
-              "value": "SCHOOL_001"
-            },
             {
               "name": "category",
               "value": "CARD"

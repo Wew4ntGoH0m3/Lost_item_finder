@@ -113,7 +113,6 @@ Flask API :8000
 | `email` | VARCHAR(255) | Y | 로그인 ID, UNIQUE |
 | `password_hash` | VARCHAR(255) | Y | 해시 비밀번호 |
 | `nickname` | VARCHAR(20) | Y | 표시 이름 |
-| `site_code` | VARCHAR(50) | Y | 소속 학교·행사장 |
 | `profile_image_url` | VARCHAR(500) | N | 프로필 이미지 |
 | `is_active` | BOOLEAN | Y | 계정 활성 상태 |
 | `created_at` | DATETIME | Y | 생성 시각 |
@@ -125,7 +124,6 @@ Flask API :8000
 |---|---|---:|---|
 | `id` | BIGINT | Y | PK |
 | `user_id` | BIGINT | Y | FK -> `users.id`, 작성자 |
-| `site_code` | VARCHAR(50) | Y | 학교·행사장 코드 |
 | `title` | VARCHAR(100) | Y | LLM 또는 근거 템플릿으로 생성된 제목 |
 | `category` | `ItemCategory` Enum | Y | 후보 선필터 태그 |
 | `color` | VARCHAR(30) | Y | 대표 색상 |
@@ -142,7 +140,7 @@ Flask API :8000
 
 ```sql
 CREATE INDEX ix_lost_post_match_candidates
-ON lost_posts (site_code, status, category, lost_at);
+ON lost_posts (status, category, lost_at);
 ```
 
 ### 5.3 FoundPost
@@ -151,7 +149,6 @@ ON lost_posts (site_code, status, category, lost_at);
 |---|---|---:|---|
 | `id` | BIGINT | Y | PK |
 | `user_id` | BIGINT | Y | FK -> `users.id`, 작성자 |
-| `site_code` | VARCHAR(50) | Y | 학교·행사장 코드 |
 | `title` | VARCHAR(100) | Y | 제목 |
 | `category` | `ItemCategory` Enum | Y | 후보 선필터 태그 |
 | `color` | VARCHAR(30) | Y | 대표 색상 |
@@ -167,7 +164,7 @@ ON lost_posts (site_code, status, category, lost_at);
 
 ```sql
 CREATE INDEX ix_found_post_match_candidates
-ON found_posts (site_code, status, category, found_at);
+ON found_posts (status, category, found_at);
 ```
 
 ### 5.4 Match
@@ -238,8 +235,7 @@ ON found_posts (site_code, status, category, found_at);
 ```sql
 SELECT *
 FROM found_posts
-WHERE site_code = :lost_site_code
-  AND status = 'STORED'
+WHERE status = 'STORED'
   AND category = :lost_category
   AND user_id != :lost_author_id
   AND found_at >= :lost_at
@@ -252,8 +248,7 @@ LIMIT 100;
 ```sql
 SELECT id
 FROM lost_posts
-WHERE site_code = :found_site_code
-  AND status = 'OPEN'
+WHERE status = 'OPEN'
   AND category = :found_category
   AND user_id != :found_author_id
   AND lost_at <= :found_at
@@ -328,8 +323,7 @@ Content-Type: application/json
 {
   "email": "user-a@example.com",
   "password": "StrongPass123!",
-  "nickname": "사용자A",
-  "siteCode": "SCHOOL_001"
+  "nickname": "사용자A"
 }
 ```
 
@@ -417,7 +411,6 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "siteCode": "SCHOOL_001",
   "title": "학생증 잃어버림",
   "category": "CARD",
   "color": "BLUE",
@@ -432,7 +425,6 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "siteCode": "SCHOOL_001",
   "category": "CARD",
   "color": "BLUE",
   "location": "강당 입구",

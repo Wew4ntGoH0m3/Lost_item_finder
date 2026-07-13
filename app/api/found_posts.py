@@ -21,7 +21,6 @@ from ..utils import (
 
 bp = Blueprint("found_posts", __name__)
 REQUIRED = [
-    "siteCode",
     "category",
     "color",
     "location",
@@ -63,9 +62,6 @@ def create_found_post():
     user = current_user()
     payload = body()
     require_fields(payload, REQUIRED)
-    site_code = str(payload["siteCode"]).strip().upper()
-    if site_code != user.site_code:
-        raise ApiError("FORBIDDEN", "소속 시설에만 게시글을 등록할 수 있습니다.", 403)
     category = parse_category(payload["category"])
     color = str(payload["color"]).strip().upper()
     location = str(payload["location"]).strip()
@@ -81,7 +77,6 @@ def create_found_post():
     content, generator = generate_found_post_content(facts)
     post = FoundPost(
         user_id=user.id,
-        site_code=site_code,
         title=content["title"],
         category=category,
         color=color,
@@ -116,14 +111,9 @@ def create_found_post():
 def list_found_posts():
     page, size = page_args()
     statement = db.select(FoundPost).where(FoundPost.status == "STORED")
-    for param, column in {
-        "siteCode": FoundPost.site_code,
-        "location": FoundPost.location,
-    }.items():
-        value = request.args.get(param)
-        if value:
-            normalized = value if param == "location" else value.upper()
-            statement = statement.where(column == normalized)
+    location = request.args.get("location")
+    if location:
+        statement = statement.where(FoundPost.location == location)
     category = request.args.get("category")
     if category:
         statement = statement.where(FoundPost.category == parse_category(category))

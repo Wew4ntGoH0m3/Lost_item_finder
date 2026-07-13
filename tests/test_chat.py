@@ -13,7 +13,6 @@ def _create_match(client):
         "/api/v1/found-posts",
         headers=auth(user_b_token),
         json={
-            "siteCode": "SCHOOL_001",
             "category": "CARD",
             "color": "BLUE",
             "location": "체육관 입구",
@@ -27,7 +26,6 @@ def _create_match(client):
         "/api/v1/lost-posts",
         headers=auth(user_a_token),
         json={
-            "siteCode": "SCHOOL_001",
             "title": "파란 학생증 잃어버림",
             "category": "CARD",
             "color": "BLUE",

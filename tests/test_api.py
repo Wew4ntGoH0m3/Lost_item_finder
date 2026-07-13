@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 
@@ -241,6 +242,126 @@ def test_found_post_content_regeneration_and_manual_edit_rejection(client):
     assert data["post"]["features"] == "손잡이에 흰색 테이프"
     assert data["post"]["observations"] == "손잡이에 흰색 테이프"
     assert data["analysisQueued"] is True
+
+
+def _without_fields(*fields):
+    return {key: value for key, value in FOUND_PAYLOAD.items() if key not in fields}
+
+
+def _upload_image(client, token, filename="item.png", content=b"fake-png-content"):
+    response = client.post(
+        "/api/v1/uploads/images",
+        data={"image": (io.BytesIO(content), filename)},
+        content_type="multipart/form-data",
+        headers=auth(token),
+    )
+    assert response.status_code == 201
+    return response.get_json()["data"]["url"]
+
+
+def test_found_post_without_category_requires_image(client):
+    signup(client, "no-category@example.com")
+    token = login(client, "no-category@example.com")
+    payload = _without_fields("category", "color")
+
+    response = client.post("/api/v1/found-posts", json=payload, headers=auth(token))
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "VALIDATION_FAILED"
+
+
+def test_found_post_rejects_partial_category_color(client):
+    signup(client, "partial-category@example.com")
+    token = login(client, "partial-category@example.com")
+    payload = {key: value for key, value in FOUND_PAYLOAD.items() if key != "color"}
+    image_url = _upload_image(client, token)
+
+    response = client.post(
+        "/api/v1/found-posts",
+        json={**payload, "imageUrl": image_url},
+        headers=auth(token),
+    )
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "VALIDATION_FAILED"
+
+
+def test_found_post_auto_fills_category_from_image_without_llm(client):
+    signup(client, "auto-fallback@example.com")
+    token = login(client, "auto-fallback@example.com")
+    image_url = _upload_image(client, token)
+    payload = _without_fields("category", "color")
+
+    response = client.post(
+        "/api/v1/found-posts",
+        json={**payload, "imageUrl": image_url},
+        headers=auth(token),
+    )
+
+    assert response.status_code == 201
+    post = response.get_json()["data"]["post"]
+    assert post["category"] == "ETC"
+    assert post["color"] == "UNKNOWN"
+    assert post["contentGenerator"] == "grounded-template-v1"
+    assert post["imageUrl"] == image_url
+
+
+def test_found_post_auto_detects_category_from_image_via_llm(client, app, monkeypatch):
+    captured = {}
+    generated = {
+        "category": "WALLET",
+        "color": "BROWN",
+        "title": "체육관 입구에서 발견된 갈색 지갑",
+        "features": "갈색 지갑이며 작은 흰색 별 스티커가 있습니다.",
+        "description": "2026년 7월 13일 14시 20분에 체육관 입구에서 발견했습니다.",
+    }
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"message": {"content": json.dumps(generated, ensure_ascii=False)}}
+
+    class FakeClient:
+        def __init__(self, timeout):
+            captured["timeout"] = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def post(self, url, json):
+            captured["body"] = json
+            return FakeResponse()
+
+    signup(client, "auto-llm@example.com")
+    token = login(client, "auto-llm@example.com")
+    image_content = b"fake-wallet-image-bytes"
+    image_url = _upload_image(client, token, content=image_content)
+    monkeypatch.setattr("app.services.found_content.httpx.Client", FakeClient)
+    app.config.update(OLLAMA_ENABLED=True, OLLAMA_CONTENT_TIMEOUT_SECONDS=20)
+    payload = _without_fields("category", "color")
+
+    response = client.post(
+        "/api/v1/found-posts",
+        json={**payload, "imageUrl": image_url},
+        headers=auth(token),
+    )
+
+    assert response.status_code == 201
+    post = response.get_json()["data"]["post"]
+    assert post["category"] == "WALLET"
+    assert post["color"] == "BROWN"
+    assert post["contentGenerator"] == "ollama-vision:qwen3-vl:4b"
+    assert captured["body"]["messages"][1]["images"] == [
+        base64.b64encode(image_content).decode("ascii")
+    ]
+    request_text = json.dumps(captured["body"], ensure_ascii=False)
+    assert "학생회실" not in request_text
+    assert "이름 초성" not in request_text
 
 
 def test_category_enum_is_exposed_and_validated(client):

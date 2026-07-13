@@ -1,4 +1,7 @@
-from flask import Blueprint, request
+from datetime import datetime, timezone
+from pathlib import Path
+
+from flask import Blueprint, current_app, request
 from flask_jwt_extended import jwt_required
 
 from ..errors import ApiError
@@ -6,7 +9,9 @@ from ..extensions import db
 from ..models import FoundPost
 from ..services.found_content import (
     build_found_content_facts,
+    build_found_image_facts,
     generate_found_post_content,
+    generate_found_post_content_from_image,
 )
 from ..utils import (
     body,
@@ -21,12 +26,10 @@ from ..utils import (
 
 bp = Blueprint("found_posts", __name__)
 REQUIRED = [
-    "category",
-    "color",
     "location",
-    "foundAt",
     "storageLocation",
 ]
+AUTO_DETECT_FIELDS = {"category", "color"}
 EDITABLE = {
     "storageLocation": "storage_location",
     "privateFeature": "private_feature",
@@ -56,25 +59,75 @@ def _generation_metadata(generator: str, facts: dict[str, str]) -> dict:
     return {"generator": generator, "sourceFields": list(facts)}
 
 
+def _load_image_bytes(image_url: str) -> bytes:
+    prefix = current_app.config["UPLOAD_URL_PREFIX"].rstrip("/") + "/"
+    filename = image_url[len(prefix) :] if image_url.startswith(prefix) else ""
+    if not filename or "/" in filename:
+        raise ApiError(
+            "VALIDATION_FAILED",
+            "imageUrl이 올바르지 않습니다.",
+            422,
+            [{"field": "imageUrl", "reason": "업로드 API로 생성된 URL이어야 합니다."}],
+        )
+    try:
+        return (Path(current_app.config["UPLOAD_DIR"]) / filename).read_bytes()
+    except OSError as exc:
+        raise ApiError(
+            "VALIDATION_FAILED",
+            "imageUrl에 해당하는 파일을 찾을 수 없습니다.",
+            422,
+            [{"field": "imageUrl", "reason": "먼저 이미지를 업로드해 주세요."}],
+        ) from exc
+
+
 @bp.post("")
 @jwt_required()
 def create_found_post():
     user = current_user()
     payload = body()
     require_fields(payload, REQUIRED)
-    category = parse_category(payload["category"])
-    color = str(payload["color"]).strip().upper()
     location = str(payload["location"]).strip()
-    found_at = parse_datetime(payload["foundAt"], "foundAt")
-    observations = _observations(payload, legacy_fallback=True)
-    facts = build_found_content_facts(
-        category,
-        color,
-        location,
-        found_at,
-        observations,
+    found_at = (
+        parse_datetime(payload["foundAt"], "foundAt")
+        if payload.get("foundAt")
+        else datetime.now(timezone.utc)
     )
-    content, generator = generate_found_post_content(facts)
+    observations = _observations(payload, legacy_fallback=True)
+    image_url = payload.get("imageUrl") or None
+
+    provided_auto_fields = {
+        field for field in AUTO_DETECT_FIELDS if payload.get(field) not in (None, "")
+    }
+    if provided_auto_fields and provided_auto_fields != AUTO_DETECT_FIELDS:
+        raise ApiError(
+            "VALIDATION_FAILED",
+            "category와 color는 둘 다 입력하거나 둘 다 비워야 합니다.",
+            422,
+            [
+                {"field": field, "reason": "함께 입력하거나 함께 비워야 합니다."}
+                for field in sorted(AUTO_DETECT_FIELDS - provided_auto_fields)
+            ],
+        )
+
+    if provided_auto_fields:
+        category = parse_category(payload["category"])
+        color = str(payload["color"]).strip().upper()
+        facts = build_found_content_facts(category, color, location, found_at, observations)
+        content, generator = generate_found_post_content(facts)
+    else:
+        if not image_url:
+            raise ApiError(
+                "VALIDATION_FAILED",
+                "category/color를 입력하지 않으면 imageUrl이 필요합니다.",
+                422,
+                [{"field": "imageUrl", "reason": "사진으로 자동 분석하려면 필수 항목입니다."}],
+            )
+        image_bytes = _load_image_bytes(image_url)
+        facts = build_found_image_facts(location, found_at, observations)
+        content, generator = generate_found_post_content_from_image(image_bytes, facts)
+        category = content["category"]
+        color = content["color"]
+
     post = FoundPost(
         user_id=user.id,
         title=content["title"],
@@ -89,7 +142,7 @@ def create_found_post():
         private_feature=payload.get("privateFeature") or None,
         verification_question=payload.get("verificationQuestion") or None,
         description=content["description"] or None,
-        image_url=payload.get("imageUrl") or None,
+        image_url=image_url,
     )
     db.session.add(post)
     db.session.commit()

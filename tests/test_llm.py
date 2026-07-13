@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -5,7 +6,9 @@ from types import SimpleNamespace
 from app.models import ItemCategory
 from app.services.found_content import (
     build_found_content_facts,
+    build_found_image_facts,
     generate_found_post_content,
+    generate_found_post_content_from_image,
 )
 from app.services.llm import rank_with_llm
 
@@ -198,3 +201,103 @@ def test_found_content_rejects_unsupported_llm_numbers(monkeypatch, app):
     assert generator == "grounded-template-v1"
     assert content["features"] == "앞면에 학교 로고"
     assert "999" not in json.dumps(content, ensure_ascii=False)
+
+
+def test_ollama_analyzes_image_for_category_and_content(monkeypatch, app):
+    captured = {}
+    result_body = {
+        "category": "WALLET",
+        "color": "BROWN",
+        "title": "강당 입구에서 발견된 갈색 지갑",
+        "features": "갈색 지갑이며 앞면에 학교 로고가 있습니다.",
+        "description": "2026년 7월 13일 14시 20분에 강당 입구에서 발견했습니다.",
+    }
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"message": {"content": json.dumps(result_body, ensure_ascii=False)}}
+
+    class FakeClient:
+        def __init__(self, timeout):
+            captured["timeout"] = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def post(self, url, json):
+            captured["url"] = url
+            captured["body"] = json
+            return FakeResponse()
+
+    facts = build_found_image_facts(
+        "강당 입구",
+        datetime(2026, 7, 13, 14, 20, tzinfo=timezone.utc),
+        "앞면에 학교 로고",
+    )
+    monkeypatch.setattr("app.services.found_content.httpx.Client", FakeClient)
+    app.config.update(
+        OLLAMA_ENABLED=True,
+        OLLAMA_BASE_URL="http://100.102.0.2:11434",
+        OLLAMA_MODEL="qwen3-vl:4b",
+        OLLAMA_CONTENT_TIMEOUT_SECONDS=20,
+    )
+    with app.app_context():
+        content, generator = generate_found_post_content_from_image(b"raw-image-bytes", facts)
+
+    assert content["category"] is ItemCategory.WALLET
+    assert content["color"] == "BROWN"
+    assert generator == "ollama-vision:qwen3-vl:4b"
+    assert captured["body"]["messages"][1]["images"] == [
+        base64.b64encode(b"raw-image-bytes").decode("ascii")
+    ]
+    assert json.loads(captured["body"]["messages"][1]["content"]) == {"sourceFacts": facts}
+
+
+def test_found_image_content_falls_back_on_invalid_category(monkeypatch, app):
+    result_body = {
+        "category": "SHOE",
+        "color": "BROWN",
+        "title": "강당 입구에서 발견된 갈색 신발",
+        "features": "갈색 신발입니다.",
+        "description": "2026년 7월 13일 14시 20분에 강당 입구에서 발견했습니다.",
+    }
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"message": {"content": json.dumps(result_body, ensure_ascii=False)}}
+
+    class FakeClient:
+        def __init__(self, timeout):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def post(self, url, json):
+            return FakeResponse()
+
+    facts = build_found_image_facts(
+        "강당 입구",
+        datetime(2026, 7, 13, 14, 20, tzinfo=timezone.utc),
+        "",
+    )
+    monkeypatch.setattr("app.services.found_content.httpx.Client", FakeClient)
+    app.config.update(OLLAMA_ENABLED=True)
+    with app.app_context():
+        content, generator = generate_found_post_content_from_image(b"raw-image-bytes", facts)
+
+    assert generator == "grounded-template-v1"
+    assert content["category"] is ItemCategory.ETC
+    assert content["color"] == "UNKNOWN"

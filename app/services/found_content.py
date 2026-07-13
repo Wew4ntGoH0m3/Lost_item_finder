@@ -227,7 +227,7 @@ def _grounded_image_template(facts: dict[str, str]) -> dict[str, str]:
     )
 
     return {
-        "category": ItemCategory.ETC.value,
+        "category": ItemCategory.ETC,
         "color": "UNKNOWN",
         "title": title[:100].rstrip(),
         "features": features[:2000].rstrip(),
@@ -235,7 +235,7 @@ def _grounded_image_template(facts: dict[str, str]) -> dict[str, str]:
     }
 
 
-def _normalize_category(value, fallback: str) -> str:
+def _normalize_category(value, fallback: ItemCategory) -> ItemCategory:
     raw = str(value or "").strip()
 
     if not raw:
@@ -249,14 +249,14 @@ def _normalize_category(value, fallback: str) -> str:
 
     for candidate in candidates:
         try:
-            return ItemCategory(candidate).value
+            return ItemCategory(candidate)
         except ValueError:
             pass
 
     member_name = raw.upper()
 
     if member_name in ItemCategory.__members__:
-        return ItemCategory[member_name].value
+        return ItemCategory[member_name]
 
     return fallback
 

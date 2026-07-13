@@ -1,14 +1,19 @@
 import base64
+import io
 import json
 import logging
 from datetime import datetime, timezone
 
 import httpx
 from flask import current_app
+from PIL import Image, UnidentifiedImageError
 
 from ..models import ITEM_CATEGORY_LABELS, ItemCategory
 
 logger = logging.getLogger(__name__)
+
+LLM_IMAGE_MAX_DIMENSION = 1024
+LLM_IMAGE_JPEG_QUALITY = 85
 
 COLOR_LABELS = {
     "BLACK": "검정색",
@@ -129,6 +134,40 @@ def _validate_generated_content(raw, facts: dict[str, str]) -> dict[str, str] | 
     return content
 
 
+def _prepare_image_for_llm(image_bytes: bytes) -> bytes:
+    """Downscale/re-encode so full-resolution phone photos don't blow the LLM timeout."""
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        image = image.convert("RGB")
+    except (UnidentifiedImageError, OSError):
+        return image_bytes
+
+    image.thumbnail((LLM_IMAGE_MAX_DIMENSION, LLM_IMAGE_MAX_DIMENSION))
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG", quality=LLM_IMAGE_JPEG_QUALITY)
+    return buffer.getvalue()
+
+
+def _post_to_ollama(request_body: dict) -> dict:
+    url = f"{current_app.config['OLLAMA_BASE_URL'].rstrip('/')}/api/chat"
+    timeout = current_app.config["OLLAMA_CONTENT_TIMEOUT_SECONDS"]
+
+    with httpx.Client(timeout=timeout) as client:
+        response = client.post(url, json=request_body)
+
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError:
+            logger.error(
+                "Ollama request failed: status=%s body=%s",
+                response.status_code,
+                response.text[:1000],
+            )
+            raise
+
+    return response.json()
+
+
 def _read_ollama_message_content(response_json: dict) -> str:
     message = response_json.get("message")
 
@@ -177,14 +216,8 @@ def generate_found_post_content(facts: dict[str, str]) -> tuple[dict[str, str], 
         ],
     }
 
-    url = f"{current_app.config['OLLAMA_BASE_URL'].rstrip('/')}/api/chat"
-
     try:
-        with httpx.Client(timeout=current_app.config["OLLAMA_CONTENT_TIMEOUT_SECONDS"]) as client:
-            response = client.post(url, json=request_body)
-            response.raise_for_status()
-
-        response_content = _read_ollama_message_content(response.json())
+        response_content = _read_ollama_message_content(_post_to_ollama(request_body))
         raw = json.loads(_strip_code_fence(response_content))
 
         content = _validate_generated_content(raw, facts)
@@ -330,7 +363,7 @@ def generate_found_post_content_from_image(
         "JSON 외에는 출력하지 마세요."
     )
 
-    image_b64 = base64.b64encode(image_bytes).decode("ascii")
+    image_b64 = base64.b64encode(_prepare_image_for_llm(image_bytes)).decode("ascii")
 
     request_body = {
         "model": current_app.config["OLLAMA_MODEL"],
@@ -348,14 +381,8 @@ def generate_found_post_content_from_image(
         ],
     }
 
-    url = f"{current_app.config['OLLAMA_BASE_URL'].rstrip('/')}/api/chat"
-
     try:
-        with httpx.Client(timeout=current_app.config["OLLAMA_CONTENT_TIMEOUT_SECONDS"]) as client:
-            response = client.post(url, json=request_body)
-            response.raise_for_status()
-
-        response_content = _read_ollama_message_content(response.json())
+        response_content = _read_ollama_message_content(_post_to_ollama(request_body))
         raw = json.loads(_strip_code_fence(response_content))
 
         content = _validate_generated_image_content(raw, facts)

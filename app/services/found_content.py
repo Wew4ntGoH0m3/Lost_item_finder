@@ -25,6 +25,20 @@ COLOR_LABELS = {
     "ORANGE": "주황색",
 }
 
+KOREAN_COLOR_TO_CODE = {
+    "검정색": "BLACK",
+    "흰색": "WHITE",
+    "파란색": "BLUE",
+    "빨간색": "RED",
+    "회색": "GRAY",
+    "초록색": "GREEN",
+    "노란색": "YELLOW",
+    "보라색": "PURPLE",
+    "분홍색": "PINK",
+    "갈색": "BROWN",
+    "주황색": "ORANGE",
+}
+
 CONTENT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -58,14 +72,18 @@ def build_found_content_facts(
     observations: str,
 ) -> dict[str, str]:
     normalized_color = color.strip().upper()
+    observations = observations.strip()
+
     facts = {
         "category": ITEM_CATEGORY_LABELS[category],
         "color": COLOR_LABELS.get(normalized_color, color.strip()),
         "location": location.strip(),
         "foundAt": found_at.astimezone(timezone.utc).isoformat(),
     }
+
     if observations:
         facts["observations"] = observations
+
     return facts
 
 
@@ -74,6 +92,7 @@ def _grounded_template(facts: dict[str, str]) -> dict[str, str]:
     features = facts.get("observations") or f"{facts['color']} {facts['category']}"
     found_at = datetime.fromisoformat(facts["foundAt"]).astimezone(timezone.utc)
     description = f"{found_at:%Y-%m-%d %H:%M UTC}에 {facts['location']}에서 발견했습니다."
+
     return {
         "title": title[:100].rstrip(),
         "features": features[:2000].rstrip(),
@@ -83,11 +102,15 @@ def _grounded_template(facts: dict[str, str]) -> dict[str, str]:
 
 def _strip_code_fence(content: str) -> str:
     value = content.strip()
+
     if not value.startswith("```"):
         return value
+
     lines = value.splitlines()[1:]
+
     if lines and lines[-1].strip() == "```":
         lines = lines[:-1]
+
     return "\n".join(lines).strip()
 
 
@@ -97,25 +120,44 @@ def _validate_generated_content(raw, facts: dict[str, str]) -> dict[str, str] | 
 
     fallback = _grounded_template(facts)
     content = {}
+
     for field, limit in (("title", 100), ("features", 2000), ("description", 2000)):
         value = raw.get(field)
         text = str(value).strip() if value is not None else ""
-        content[field] = text[:limit] if text else fallback[field]
+        content[field] = text[:limit].rstrip() if text else fallback[field]
+
+    return content
+
+
+def _read_ollama_message_content(response_json: dict) -> str:
+    message = response_json.get("message")
+
+    if not isinstance(message, dict):
+        raise ValueError("Ollama response message is missing or invalid")
+
+    content = message.get("content")
+
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("Ollama response message.content is empty")
+
     return content
 
 
 def generate_found_post_content(facts: dict[str, str]) -> tuple[dict[str, str], str]:
     fallback = _grounded_template(facts)
+
     if not current_app.config["OLLAMA_ENABLED"]:
         return fallback, "grounded-template-v1"
 
     system_prompt = (
-        "당신은 습득물 게시글 작성기입니다. sourceFacts JSON에 실제로 존재하는 정보만 "
-        "사용해 한국어 title, features, description을 작성하세요. 브랜드, 모델, 소유자, "
-        "물건 상태, 손상, 내용물, 발견 경위 등 제공되지 않은 사실을 추측하거나 추가하지 "
-        "마세요. 값이 없는 정보는 언급하지 마세요. observations의 의미를 확대하지 마세요. "
+        "당신은 습득물 게시글 작성기입니다. "
+        "sourceFacts JSON에 실제로 존재하는 정보만 사용해 한국어 title, features, description을 작성하세요. "
+        "브랜드, 모델, 소유자, 물건 상태, 손상, 내용물, 발견 경위 등 제공되지 않은 사실을 추측하거나 추가하지 마세요. "
+        "값이 없는 정보는 언급하지 마세요. "
+        "observations의 의미를 확대하지 마세요. "
         "JSON 외에는 출력하지 마세요."
     )
+
     request_body = {
         "model": current_app.config["OLLAMA_MODEL"],
         "stream": False,
@@ -130,42 +172,58 @@ def generate_found_post_content(facts: dict[str, str]) -> tuple[dict[str, str], 
             },
         ],
     }
+
     url = f"{current_app.config['OLLAMA_BASE_URL'].rstrip('/')}/api/chat"
+
     try:
         with httpx.Client(timeout=current_app.config["OLLAMA_CONTENT_TIMEOUT_SECONDS"]) as client:
             response = client.post(url, json=request_body)
             response.raise_for_status()
-        message = response.json()["message"]
-        response_content = message.get("content") or message.get("thinking")
+
+        response_content = _read_ollama_message_content(response.json())
         raw = json.loads(_strip_code_fence(response_content))
+
         content = _validate_generated_content(raw, facts)
+
         if content:
             return content, f"ollama:{current_app.config['OLLAMA_MODEL']}"
+
     except (httpx.HTTPError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         logger.exception("LLM found-post generation failed; using grounded template")
+
     return fallback, "grounded-template-v1"
 
 
-def build_found_image_facts(location: str, found_at: datetime, observations: str) -> dict[str, str]:
+def build_found_image_facts(
+    location: str,
+    found_at: datetime,
+    observations: str,
+) -> dict[str, str]:
+    observations = observations.strip()
+
     facts = {
         "location": location.strip(),
         "foundAt": found_at.astimezone(timezone.utc).isoformat(),
     }
+
     if observations:
         facts["observations"] = observations
+
     return facts
 
 
-def _grounded_image_template(facts: dict[str, str]) -> dict:
+def _grounded_image_template(facts: dict[str, str]) -> dict[str, str]:
     title = f"{facts['location']}에서 발견된 물품"
     features = facts.get("observations") or "사진을 확인해 주세요."
     found_at = datetime.fromisoformat(facts["foundAt"]).astimezone(timezone.utc)
+
     description = (
         f"{found_at:%Y-%m-%d %H:%M UTC}에 {facts['location']}에서 발견했습니다. "
         "사진을 참고해 주세요."
     )
+
     return {
-        "category": ItemCategory.ETC,
+        "category": ItemCategory.ETC.value,
         "color": "UNKNOWN",
         "title": title[:100].rstrip(),
         "features": features[:2000].rstrip(),
@@ -173,44 +231,102 @@ def _grounded_image_template(facts: dict[str, str]) -> dict:
     }
 
 
-def _validate_generated_image_content(raw, facts: dict[str, str]) -> dict | None:
+def _normalize_category(value, fallback: str) -> str:
+    raw = str(value or "").strip()
+
+    if not raw:
+        return fallback
+
+    candidates = [
+        raw,
+        raw.upper(),
+        raw.lower(),
+    ]
+
+    for candidate in candidates:
+        try:
+            return ItemCategory(candidate).value
+        except ValueError:
+            pass
+
+    member_name = raw.upper()
+
+    if member_name in ItemCategory.__members__:
+        return ItemCategory[member_name].value
+
+    return fallback
+
+
+def _normalize_color(value, fallback: str) -> str:
+    raw = str(value or "").strip()
+
+    if not raw:
+        return fallback
+
+    upper = raw.upper()
+
+    if upper in COLOR_LABELS:
+        return upper
+
+    if upper == "UNKNOWN":
+        return "UNKNOWN"
+
+    if raw in KOREAN_COLOR_TO_CODE:
+        return KOREAN_COLOR_TO_CODE[raw]
+
+    return fallback
+
+
+def _validate_generated_image_content(raw, facts: dict[str, str]) -> dict[str, str] | None:
     if not isinstance(raw, dict):
         return None
 
     fallback = _grounded_image_template(facts)
 
-    try:
-        category = ItemCategory(str(raw.get("category", "")).strip().upper())
-    except ValueError:
-        category = fallback["category"]
-
-    color = str(raw.get("color") or "").strip().upper()[:30] or fallback["color"]
+    category = _normalize_category(raw.get("category"), fallback["category"])
+    color = _normalize_color(raw.get("color"), fallback["color"])
 
     text_fields = {}
+
     for field, limit in (("title", 100), ("features", 2000), ("description", 2000)):
         value = raw.get(field)
         text = str(value).strip() if value is not None else ""
-        text_fields[field] = text[:limit] if text else fallback[field]
+        text_fields[field] = text[:limit].rstrip() if text else fallback[field]
 
-    return {"category": category, "color": color, **text_fields}
+    return {
+        "category": category,
+        "color": color,
+        **text_fields,
+    }
 
 
 def generate_found_post_content_from_image(
-    image_bytes: bytes, facts: dict[str, str]
-) -> tuple[dict, str]:
+    image_bytes: bytes,
+    facts: dict[str, str],
+) -> tuple[dict[str, str], str]:
     fallback = _grounded_image_template(facts)
+
     if not current_app.config["OLLAMA_ENABLED"]:
         return fallback, "grounded-template-v1"
 
     category_options = ", ".join(item.value for item in ItemCategory)
+    color_options = ", ".join([*COLOR_LABELS.keys(), "UNKNOWN"])
+
     system_prompt = (
-        "당신은 습득물 게시글 작성기입니다. 첨부된 사진과 sourceFacts JSON에 실제로 존재하는 "
-        f"정보만 사용해 category({category_options} 중 하나), color, 한국어 title, features, "
-        "description을 작성하세요. 사진에서 직접 확인할 수 없는 브랜드, 모델, 소유자, 손상, "
-        "내용물, 발견 경위 등을 추측하거나 추가하지 마세요. sourceFacts에 없는 정보는 언급하지 "
-        "마세요. JSON 외에는 출력하지 마세요."
+        "당신은 습득물 게시글 작성기입니다. "
+        "첨부된 사진과 sourceFacts JSON에 실제로 존재하는 정보만 사용하세요. "
+        f"category는 반드시 다음 중 하나만 사용하세요: {category_options}. "
+        f"color는 가능하면 다음 중 하나만 사용하세요: {color_options}. "
+        "색상을 판단하기 어려우면 UNKNOWN을 사용하세요. "
+        "한국어 title, features, description을 작성하세요. "
+        "사진에서 직접 확인할 수 없는 브랜드, 모델, 소유자, 손상, 내용물, 발견 경위 등을 추측하거나 추가하지 마세요. "
+        "sourceFacts에 없는 정보는 언급하지 마세요. "
+        "observations의 의미를 확대하지 마세요. "
+        "JSON 외에는 출력하지 마세요."
     )
+
     image_b64 = base64.b64encode(image_bytes).decode("ascii")
+
     request_body = {
         "model": current_app.config["OLLAMA_MODEL"],
         "stream": False,
@@ -226,17 +342,23 @@ def generate_found_post_content_from_image(
             },
         ],
     }
+
     url = f"{current_app.config['OLLAMA_BASE_URL'].rstrip('/')}/api/chat"
+
     try:
         with httpx.Client(timeout=current_app.config["OLLAMA_CONTENT_TIMEOUT_SECONDS"]) as client:
             response = client.post(url, json=request_body)
             response.raise_for_status()
-        message = response.json()["message"]
-        response_content = message.get("content") or message.get("thinking")
+
+        response_content = _read_ollama_message_content(response.json())
         raw = json.loads(_strip_code_fence(response_content))
+
         content = _validate_generated_image_content(raw, facts)
+
         if content:
             return content, f"ollama-vision:{current_app.config['OLLAMA_MODEL']}"
+
     except (httpx.HTTPError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         logger.exception("LLM found-post image analysis failed; using grounded template")
+
     return fallback, "grounded-template-v1"

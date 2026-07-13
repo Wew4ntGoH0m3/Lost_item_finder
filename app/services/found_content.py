@@ -135,10 +135,12 @@ def _read_ollama_message_content(response_json: dict) -> str:
     if not isinstance(message, dict):
         raise ValueError("Ollama response message is missing or invalid")
 
-    content = message.get("content")
+    # qwen3-vl ignores the "think": false request flag (Ollama issue #14798/#13353)
+    # and always puts its answer in "thinking" instead of "content".
+    content = message.get("content") or message.get("thinking")
 
     if not isinstance(content, str) or not content.strip():
-        raise ValueError("Ollama response message.content is empty")
+        raise ValueError("Ollama response message content/thinking is empty")
 
     return content
 
@@ -151,8 +153,10 @@ def generate_found_post_content(facts: dict[str, str]) -> tuple[dict[str, str], 
 
     system_prompt = (
         "당신은 습득물 게시글 작성기입니다. "
-        "sourceFacts JSON에 실제로 존재하는 정보만 사용해 한국어 title, features, description을 작성하세요. "
-        "브랜드, 모델, 소유자, 물건 상태, 손상, 내용물, 발견 경위 등 제공되지 않은 사실을 추측하거나 추가하지 마세요. "
+        "sourceFacts JSON에 실제로 존재하는 정보만 사용해 한국어 title, features, "
+        "description을 작성하세요. "
+        "브랜드, 모델, 소유자, 물건 상태, 손상, 내용물, 발견 경위 등 제공되지 않은 "
+        "사실을 추측하거나 추가하지 마세요. "
         "값이 없는 정보는 언급하지 마세요. "
         "observations의 의미를 확대하지 마세요. "
         "JSON 외에는 출력하지 마세요."
@@ -319,7 +323,8 @@ def generate_found_post_content_from_image(
         f"color는 가능하면 다음 중 하나만 사용하세요: {color_options}. "
         "색상을 판단하기 어려우면 UNKNOWN을 사용하세요. "
         "한국어 title, features, description을 작성하세요. "
-        "사진에서 직접 확인할 수 없는 브랜드, 모델, 소유자, 손상, 내용물, 발견 경위 등을 추측하거나 추가하지 마세요. "
+        "사진에서 직접 확인할 수 없는 브랜드, 모델, 소유자, 손상, 내용물, "
+        "발견 경위 등을 추측하거나 추가하지 마세요. "
         "sourceFacts에 없는 정보는 언급하지 마세요. "
         "observations의 의미를 확대하지 마세요. "
         "JSON 외에는 출력하지 마세요."

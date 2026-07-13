@@ -267,3 +267,11 @@ def test_public_lists_filter_by_exact_category_tag(client):
     found_items = client.get("/api/v1/found-posts?category=CARD").get_json()["data"]["items"]
     assert {item["category"] for item in lost_items} == {"CARD"}
     assert {item["category"] for item in found_items} == {"CARD"}
+
+
+def test_unresolved_path_parameter_returns_json_404(client):
+    response = client.delete("/api/v1/found-posts/{{foundPostId}}")
+
+    assert response.status_code == 404
+    assert response.content_type == "application/json"
+    assert response.get_json()["error"]["code"] == "ROUTE_NOT_FOUND"

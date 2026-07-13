@@ -502,6 +502,7 @@ const socket = io("http://13.124.179.95", {
 | 404 | `FOUND_POST_NOT_FOUND` | 습득글 없음 |
 | 404 | `MATCH_NOT_FOUND` | 매칭 없음 |
 | 404 | `CHAT_ROOM_NOT_FOUND` | 참여 가능한 채팅방 없음 |
+| 404 | `ROUTE_NOT_FOUND` | URL 변수가 치환되지 않았거나 API 경로가 없음 |
 | 409 | `INVALID_STATUS_TRANSITION` | 허용되지 않은 상태 변경 |
 | 409 | `CHAT_NOT_AVAILABLE` | 수령 요청 전 채팅 생성 시도 |
 | 409 | `CHAT_CLOSED` | 종료된 채팅방에 메시지 송신 |

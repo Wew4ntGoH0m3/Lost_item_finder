@@ -1,4 +1,5 @@
 from flask import jsonify
+from werkzeug.exceptions import HTTPException
 
 
 class ApiError(Exception):
@@ -43,4 +44,26 @@ def register_error_handlers(app):
                 }
             ),
             413,
+        )
+
+    @app.errorhandler(HTTPException)
+    def handle_http_error(error):
+        status = error.code or 500
+        code, message = {
+            404: ("ROUTE_NOT_FOUND", "요청한 API 경로를 찾을 수 없습니다."),
+            405: ("METHOD_NOT_ALLOWED", "허용되지 않은 HTTP 메서드입니다."),
+        }.get(status, ("HTTP_ERROR", error.description))
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "error": {
+                        "code": code,
+                        "message": message,
+                        "details": [],
+                    },
+                }
+            ),
+            status,
         )

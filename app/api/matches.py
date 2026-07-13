@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
 from ..errors import ApiError
@@ -22,6 +22,24 @@ def _can_access(user, match: Match) -> bool:
         match.lost_post.user_id,
         match.found_post.user_id,
     }
+
+
+@bp.get("")
+@jwt_required()
+def list_my_matches():
+    user = current_user()
+    statement = (
+        db.select(Match)
+        .join(LostPost, Match.lost_post_id == LostPost.id)
+        .join(FoundPost, Match.found_post_id == FoundPost.id)
+        .where(db.or_(LostPost.user_id == user.id, FoundPost.user_id == user.id))
+    )
+    status = request.args.get("status")
+    if status:
+        statement = statement.where(Match.status == status.upper())
+    statement = statement.order_by(Match.score.desc(), Match.created_at.desc())
+    items = list(db.session.scalars(statement))
+    return success({"items": [item.to_dict() for item in items]})
 
 
 @bp.get("/lost-posts/<int:lost_post_id>")

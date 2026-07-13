@@ -424,6 +424,36 @@ def test_registration_automatically_creates_same_tag_match(client):
     assert items[0]["modelVersion"] == "rule-v1"
 
 
+def test_list_my_matches_visible_to_both_sides_and_filters_by_status(client):
+    user_a_token, user_b_token = create_users(client)
+    lost, found = create_matching_posts(client, user_a_token, user_b_token)
+
+    for token in (user_a_token, user_b_token):
+        response = client.get("/api/v1/matches", headers=auth(token))
+        assert response.status_code == 200
+        items = response.get_json()["data"]["items"]
+        assert len(items) == 1
+        assert items[0]["lostPostId"] == lost["id"]
+        assert items[0]["foundPostId"] == found["id"]
+
+    filtered = client.get(
+        "/api/v1/matches?status=CANDIDATE", headers=auth(user_a_token)
+    ).get_json()["data"]["items"]
+    assert len(filtered) == 1
+
+    empty = client.get(
+        "/api/v1/matches?status=REJECTED", headers=auth(user_a_token)
+    ).get_json()["data"]["items"]
+    assert empty == []
+
+    signup(client, "user-c@example.com", "사용자C")
+    user_c_token = login(client, "user-c@example.com")
+    unrelated = client.get(
+        "/api/v1/matches", headers=auth(user_c_token)
+    ).get_json()["data"]["items"]
+    assert unrelated == []
+
+
 def test_candidate_query_excludes_different_category_tag(client):
     user_a_token, user_b_token = create_users(client)
     wallet = create_found(

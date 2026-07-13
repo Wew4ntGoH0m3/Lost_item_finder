@@ -1,0 +1,71 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: [BE]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: python -m pytest
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          password: ${{ secrets.EC2_PASSWORD }}
+          envs: POSTGRES_PASSWORD,SECRET_KEY,JWT_SECRET_KEY
+          script: |
+            set -eu
+            DEPLOY_DIR="$HOME/Dorm_lost_item_finder"
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              git clone --branch BE --single-branch https://github.com/Wew4ntGoH0m3/Lost_item_finder.git "$DEPLOY_DIR"
+            fi
+            cd "$DEPLOY_DIR"
+            git fetch origin BE
+            git checkout BE
+            git reset --hard origin/BE
+            umask 077
+            cat > .env <<EOF
+            SECRET_KEY=$SECRET_KEY
+            JWT_SECRET_KEY=$JWT_SECRET_KEY
+            POSTGRES_USER=postgres
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            POSTGRES_DB=db_server
+            POSTGRES_PORT=5433
+            HTTP_PORT=80
+            UPLOADS_PATH=/home/ec2-user/lostlink-uploads
+            OLLAMA_ENABLED=true
+            OLLAMA_BASE_URL=http://100.102.0.2:11434
+            OLLAMA_MODEL=qwen3-vl:4b
+            OLLAMA_TIMEOUT_SECONDS=60
+            EOF
+            mkdir -p "$HOME/lostlink-uploads"
+            EXISTING_PROJECT="$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' postgres 2>/dev/null || true)"
+            if [ -n "$EXISTING_PROJECT" ] && [ "$EXISTING_PROJECT" != "lostlink" ]; then
+              docker rm -f postgres
+            fi
+            docker compose -p lostlink up -d --build --remove-orphans
+            docker compose -p lostlink up -d --force-recreate nginx
+            docker compose -p lostlink ps
+            curl --fail --retry 12 --retry-delay 5 http://127.0.0.1/healthz

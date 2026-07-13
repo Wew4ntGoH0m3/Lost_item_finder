@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "2f7ebd4c-7c2e-4db7-b265-f5122cf4eb27",
     "name": "LostLink Backend API",
-    "description": "LostLink Flask API Postman Collection v2.1\n\n권장 실행 순서: Auth Setup -> Upload(선택) -> Found Posts -> Lost Posts -> Matching and Claim -> Chats.\nUser A와 User B는 동일한 일반 사용자이며 각 계정은 분실글과 습득글을 모두 작성할 수 있습니다.\n회원가입은 앱 기능이 아니라 Postman 시연 계정 생성용입니다.\n각 생성/로그인 응답은 JWT와 ID를 collection variable에 자동 저장합니다.\nSocket.IO 설정은 마지막 폴더 설명을 확인하세요.",
+    "description": "LostLink Flask API Postman Collection v2.1\n\n권장 실행 순서: Auth Setup -> Upload(선택) -> Found Posts -> Lost Posts -> Matching and Claim -> Chats.\nUser A와 User B는 동일한 일반 사용자이며 각 계정은 분실글과 습득글을 모두 작성할 수 있습니다.\n습득글은 공개 입력 사실과 observations만 보내면 서버가 title, features, description을 자동 생성합니다.\n이미지는 Base64가 아니라 multipart 업로드 후 imageUrl을 사용합니다.\n회원가입은 앱 기능이 아니라 Postman 시연 계정 생성용입니다.\n각 생성/로그인 응답은 JWT와 ID를 collection variable에 자동 저장합니다.\nSocket.IO 설정은 마지막 폴더 설명을 확인하세요.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -563,7 +563,7 @@
     },
     {
       "name": "04. Found Posts",
-      "description": "CARD 습득글 ID는 foundPostId에, 비교 제외 확인용 WALLET 글 ID는 wrongFoundPostId에 저장합니다.",
+      "description": "앱은 공개 사실과 observations만 보내며 서버가 title, features, description을 자동 생성합니다. 보관 위치·비공개 특징·확인 질문·이미지는 LLM에 전달되지 않습니다. CARD 습득글 ID는 foundPostId에, 비교 제외 확인용 WALLET 글 ID는 wrongFoundPostId에 저장합니다.",
       "item": [
         {
           "name": "Create CARD Found Post",
@@ -580,6 +580,8 @@
                   "if (pm.response.code === 201) {",
                   "    const json = pm.response.json();",
                   "    pm.collectionVariables.set(\"foundPostId\", json.data.post.id);",
+                  "    pm.expect(json.data.post.contentGenerator).to.be.a(\"string\");",
+                  "    pm.expect(json.data.contentGeneration.sourceFields).to.not.include(\"storageLocation\");",
                   "}"
                 ]
               }
@@ -605,10 +607,10 @@
               ]
             },
             "url": "{{baseUrl}}/api/v1/found-posts",
-            "description": "",
+            "description": "title, features, description은 보내지 않습니다. 서버가 공개 입력 사실만으로 자동 생성합니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"siteCode\": \"{{siteCode}}\",\n  \"title\": \"강당 입구에서 학생증 주움\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"features\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"description\": \"출입문 옆에서 발견\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
+              "raw": "{\n  \"siteCode\": \"{{siteCode}}\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -658,10 +660,10 @@
               ]
             },
             "url": "{{baseUrl}}/api/v1/found-posts",
-            "description": "",
+            "description": "비교 제외용 WALLET 글도 동일한 자동 작성 흐름을 사용합니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"siteCode\": \"{{siteCode}}\",\n  \"title\": \"파란 카드지갑 주움\",\n  \"category\": \"WALLET\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"features\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"description\": \"출입문 옆에서 발견\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
+              "raw": "{\n  \"siteCode\": \"{{siteCode}}\",\n  \"category\": \"WALLET\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:20:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고와 모서리 흠집\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는 무엇인가요?\",\n  \"imageUrl\": \"{{imageUrl}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -768,10 +770,10 @@
               ]
             },
             "url": "{{baseUrl}}/api/v1/found-posts/{{foundPostId}}",
-            "description": "",
+            "description": "observations를 수정하면 title, features, description이 다시 생성됩니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"storageLocation\": \"학생회실 보관함 2번\"\n}",
+              "raw": "{\n  \"storageLocation\": \"학생회실 보관함 2번\",\n  \"observations\": \"앞면에 파란색 학교 로고, 모서리에 작은 흠집\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

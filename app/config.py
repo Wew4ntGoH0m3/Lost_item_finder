@@ -33,6 +33,9 @@ class Config:
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
     OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "60"))
+    OLLAMA_CONTENT_TIMEOUT_SECONDS = float(
+        os.getenv("OLLAMA_CONTENT_TIMEOUT_SECONDS", "20")
+    )
     MATCH_MIN_SCORE = float(os.getenv("MATCH_MIN_SCORE", "50"))
     MATCH_NOTIFY_SCORE = float(os.getenv("MATCH_NOTIFY_SCORE", "85"))
     MATCH_CANDIDATE_LIMIT = int(os.getenv("MATCH_CANDIDATE_LIMIT", "100"))

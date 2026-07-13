@@ -175,6 +175,10 @@ class FoundPost(TimestampMixin, db.Model):
     found_at: Mapped[datetime] = mapped_column(index=True)
     storage_location: Mapped[str] = mapped_column(db.String(100))
     features: Mapped[str] = mapped_column(db.Text)
+    source_observations: Mapped[str] = mapped_column(db.Text, default="")
+    content_generator: Mapped[str] = mapped_column(
+        db.String(100), default="legacy/manual-v1"
+    )
     private_feature: Mapped[str | None] = mapped_column(db.Text)
     verification_question: Mapped[str | None] = mapped_column(db.String(255))
     description: Mapped[str | None] = mapped_column(db.Text)
@@ -198,6 +202,7 @@ class FoundPost(TimestampMixin, db.Model):
             "foundAt": self.found_at.isoformat(),
             "features": self.features,
             "description": self.description,
+            "contentGenerator": self.content_generator,
             "imageUrl": self.image_url,
             "status": self.status,
             "createdAt": self.created_at.isoformat(),
@@ -205,6 +210,7 @@ class FoundPost(TimestampMixin, db.Model):
         }
         if include_private:
             data["storageLocation"] = self.storage_location
+            data["observations"] = self.source_observations
             data["privateFeature"] = self.private_feature
             data["verificationQuestion"] = self.verification_question
         return data

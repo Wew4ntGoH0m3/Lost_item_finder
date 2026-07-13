@@ -14,13 +14,12 @@ def _create_match(client):
         headers=auth(user_b_token),
         json={
             "siteCode": "SCHOOL_001",
-            "title": "체육관에서 학생증 주움",
             "category": "CARD",
             "color": "BLUE",
             "location": "체육관 입구",
             "foundAt": "2026-07-13T14:20:00Z",
             "storageLocation": "학생회실",
-            "features": "파란 학교 로고",
+            "observations": "파란 학교 로고",
             "verificationQuestion": "학번 끝 두 자리는?",
         },
     ).get_json()["data"]["post"]

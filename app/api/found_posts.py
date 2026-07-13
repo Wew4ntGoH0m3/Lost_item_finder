@@ -4,6 +4,10 @@ from flask_jwt_extended import jwt_required
 from ..errors import ApiError
 from ..extensions import db
 from ..models import FoundPost
+from ..services.found_content import (
+    build_found_content_facts,
+    generate_found_post_content,
+)
 from ..utils import (
     body,
     current_user,
@@ -18,25 +22,39 @@ from ..utils import (
 bp = Blueprint("found_posts", __name__)
 REQUIRED = [
     "siteCode",
-    "title",
     "category",
     "color",
     "location",
     "foundAt",
     "storageLocation",
-    "features",
 ]
 EDITABLE = {
-    "title": "title",
-    "color": "color",
-    "location": "location",
     "storageLocation": "storage_location",
-    "features": "features",
     "privateFeature": "private_feature",
     "verificationQuestion": "verification_question",
-    "description": "description",
     "imageUrl": "image_url",
 }
+SOURCE_FIELDS = {"category", "color", "location", "foundAt", "observations"}
+MANUAL_CONTENT_FIELDS = {"title", "features", "description"}
+
+
+def _observations(payload: dict, legacy_fallback: bool = False) -> str:
+    value = payload.get("observations")
+    if value is None and legacy_fallback:
+        value = payload.get("features")
+    normalized = str(value or "").strip()
+    if len(normalized) > 1000:
+        raise ApiError(
+            "VALIDATION_FAILED",
+            "observations는 1000자 이하여야 합니다.",
+            422,
+            [{"field": "observations", "reason": "1000자 이하여야 합니다."}],
+        )
+    return normalized
+
+
+def _generation_metadata(generator: str, facts: dict[str, str]) -> dict:
+    return {"generator": generator, "sourceFields": list(facts)}
 
 
 @bp.post("")
@@ -48,19 +66,34 @@ def create_found_post():
     site_code = str(payload["siteCode"]).strip().upper()
     if site_code != user.site_code:
         raise ApiError("FORBIDDEN", "소속 시설에만 게시글을 등록할 수 있습니다.", 403)
+    category = parse_category(payload["category"])
+    color = str(payload["color"]).strip().upper()
+    location = str(payload["location"]).strip()
+    found_at = parse_datetime(payload["foundAt"], "foundAt")
+    observations = _observations(payload, legacy_fallback=True)
+    facts = build_found_content_facts(
+        category,
+        color,
+        location,
+        found_at,
+        observations,
+    )
+    content, generator = generate_found_post_content(facts)
     post = FoundPost(
         user_id=user.id,
         site_code=site_code,
-        title=str(payload["title"]).strip(),
-        category=parse_category(payload["category"]),
-        color=str(payload["color"]).strip().upper(),
-        location=str(payload["location"]).strip(),
-        found_at=parse_datetime(payload["foundAt"], "foundAt"),
+        title=content["title"],
+        category=category,
+        color=color,
+        location=location,
+        found_at=found_at,
         storage_location=str(payload["storageLocation"]).strip(),
-        features=str(payload["features"]).strip(),
+        features=content["features"],
+        source_observations=observations,
+        content_generator=generator,
         private_feature=payload.get("privateFeature") or None,
         verification_question=payload.get("verificationQuestion") or None,
-        description=payload.get("description") or None,
+        description=content["description"] or None,
         image_url=payload.get("imageUrl") or None,
     )
     db.session.add(post)
@@ -69,7 +102,14 @@ def create_found_post():
     from ..tasks import analyze_found_post_task
 
     analyze_found_post_task.delay(post.id)
-    return success({"post": post.to_dict(include_private=True), "analysisQueued": True}, 201)
+    return success(
+        {
+            "post": post.to_dict(include_private=True),
+            "contentGeneration": _generation_metadata(generator, facts),
+            "analysisQueued": True,
+        },
+        201,
+    )
 
 
 @bp.get("")
@@ -122,17 +162,47 @@ def update_found_post(post_id):
     if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "게시글 수정 권한이 없습니다.", 403)
     payload = body()
-    needs_analysis = False
+    manual_fields = sorted(MANUAL_CONTENT_FIELDS.intersection(payload))
+    if manual_fields:
+        raise ApiError(
+            "VALIDATION_FAILED",
+            "습득글 내용은 입력 정보로 자동 생성됩니다.",
+            422,
+            [
+                {"field": field, "reason": "직접 수정할 수 없는 자동 생성 항목입니다."}
+                for field in manual_fields
+            ],
+        )
     for source, target in EDITABLE.items():
         if source in payload:
             setattr(post, target, payload[source] or None)
-            needs_analysis = True
+    regenerate_content = bool(SOURCE_FIELDS.intersection(payload))
     if "category" in payload:
         post.category = parse_category(payload["category"])
-        needs_analysis = True
+    if "color" in payload:
+        post.color = str(payload["color"]).strip().upper()
+    if "location" in payload:
+        post.location = str(payload["location"]).strip()
     if "foundAt" in payload:
         post.found_at = parse_datetime(payload["foundAt"], "foundAt")
-        needs_analysis = True
+    if "observations" in payload:
+        post.source_observations = _observations(payload)
+
+    generation = None
+    if regenerate_content:
+        facts = build_found_content_facts(
+            post.category,
+            post.color,
+            post.location,
+            post.found_at,
+            post.source_observations,
+        )
+        content, generator = generate_found_post_content(facts)
+        post.title = content["title"]
+        post.features = content["features"]
+        post.description = content["description"] or None
+        post.content_generator = generator
+        generation = _generation_metadata(generator, facts)
     if "status" in payload:
         allowed = {"STORED", "CLOSED"}
         status = str(payload["status"]).upper()
@@ -140,11 +210,17 @@ def update_found_post(post_id):
             raise ApiError("INVALID_STATUS_TRANSITION", "허용되지 않은 상태입니다.", 409)
         post.status = status
     db.session.commit()
-    if needs_analysis and post.status == "STORED":
+    if regenerate_content and post.status == "STORED":
         from ..tasks import analyze_found_post_task
 
         analyze_found_post_task.delay(post.id)
-    return success({"post": post.to_dict(include_private=True), "analysisQueued": needs_analysis})
+    response = {
+        "post": post.to_dict(include_private=True),
+        "analysisQueued": regenerate_content,
+    }
+    if generation:
+        response["contentGeneration"] = generation
+    return success(response)
 
 
 @bp.delete("/<int:post_id>")

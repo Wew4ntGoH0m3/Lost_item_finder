@@ -9,6 +9,7 @@
 - 단일 `User` 유형, 로그인·Access/Refresh JWT, 게시글 작성자 권한
 - 회원가입 API 유지, 모바일 앱 회원가입 화면 제외, Postman으로 시연 계정 생성
 - `CARD`, `WALLET`, `EARPHONE` 등 10개 공통 `ItemCategory` Enum
+- 입력된 공개 정보만 사용하는 Ollama 습득글 제목·특징·설명 자동 작성
 - 같은 시설·카테고리·유효 상태·시간 범위의 후보만 SQL에서 조회
 - Ollama `qwen3:4b` 분석, 실패 시 `rule-v1` 자동 대체
 - 수령 요청 시 분실글·습득글 작성자 전용 채팅방 자동 생성
@@ -38,7 +39,7 @@ curl http://127.0.0.1/healthz
 curl http://127.0.0.1/api/v1/categories
 ```
 
-`.env`의 `SECRET_KEY`, `JWT_SECRET_KEY`, `POSTGRES_PASSWORD`를 변경해야 합니다. Ollama가 없으면 `OLLAMA_ENABLED=false`로 두면 규칙 기반 분석만 사용합니다.
+`.env`의 `SECRET_KEY`, `JWT_SECRET_KEY`, `POSTGRES_PASSWORD`를 변경해야 합니다. Ollama가 없으면 `OLLAMA_ENABLED=false`로 두면 습득글은 입력 사실 기반 템플릿으로 작성되고 매칭은 규칙 점수를 사용합니다.
 
 테스트:
 
@@ -54,6 +55,14 @@ python -m venv .venv
 백엔드는 HTTP 호출 도구를 구분할 수 없으므로 `/api/v1/auth/signup` 자체는 공개 상태로 유지합니다. 해커톤 앱에는 회원가입 화면과 호출 코드를 넣지 않고, 시연 담당자가 Postman으로 일반 사용자 계정을 미리 생성합니다. 앱은 로그인만 제공하고 보호 API에 `Authorization: Bearer {accessToken}`을 전송합니다.
 
 사용자 종류는 하나뿐이며 `role`이나 관리자 계정이 없습니다. 모든 사용자는 분실글과 습득글을 모두 작성할 수 있습니다. “분실글 작성자”와 “습득글 작성자”는 계정 종류가 아니라 특정 매칭에서의 게시글 소유 관계입니다.
+
+## 습득글 자동 작성
+
+`POST /api/v1/found-posts`에는 `category`, `color`, `location`, `foundAt`과 선택 입력인 `observations`를 보냅니다. 서버는 이 공개 사실만 Ollama에 전달해 `title`, `features`, `description`을 생성하며 `think: false`, JSON Schema, `temperature: 0`을 사용합니다. `storageLocation`, `privateFeature`, `verificationQuestion`, 이미지 데이터는 LLM에 전달하지 않습니다.
+
+LLM이 실패하거나 입력에 없는 숫자·핵심 정보가 포함된 응답을 반환하면 서버는 동일한 공개 사실만 조합하는 `grounded-template-v1`으로 대체합니다. 원본 관찰 정보와 생성기 버전을 저장하므로 `observations`, 카테고리, 색상, 장소, 발견 시간을 수정하면 내용을 다시 생성합니다. `title`, `features`, `description`은 직접 수정할 수 없습니다.
+
+이미지는 Base64로 보내지 않습니다. 먼저 JWT와 `multipart/form-data`의 `image` 파일 필드로 `POST /api/v1/uploads/images`를 호출한 뒤, 응답의 `/uploads/{fileName}` 값을 습득글의 `imageUrl`에 넣습니다.
 
 ## ItemCategory 태그
 
@@ -111,7 +120,7 @@ Socket.IO 연결 인증:
 | POST | `/api/v1/auth/login` | 공개 | Access/Refresh JWT 발급 |
 | GET | `/api/v1/categories` | 공개 | Enum 태그 목록 |
 | POST/GET | `/api/v1/lost-posts` | 생성 JWT / 목록 공개 | 분실글 생성·조회 |
-| POST/GET | `/api/v1/found-posts` | 생성 JWT / 목록 공개 | 습득글 생성·조회 |
+| POST/GET | `/api/v1/found-posts` | 생성 JWT / 목록 공개 | LLM 내용 자동 작성·습득글 생성·조회 |
 | GET | `/api/v1/matches/lost-posts/{id}` | 분실글 작성자 | 동일 태그 매칭 후보 |
 | POST | `/api/v1/matches/{id}/claims` | 분실글 작성자 | 수령 요청·채팅방 생성 |
 | PATCH | `/api/v1/matches/{id}/verify` | 습득글 작성자 | 본인 확인 |

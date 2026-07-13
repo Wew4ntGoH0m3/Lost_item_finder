@@ -1,19 +1,18 @@
 import io
+import json
 
 from conftest import auth, login, signup
 
 FOUND_PAYLOAD = {
     "siteCode": "SCHOOL_001",
-    "title": "체육관에서 검정 이어폰 케이스 주움",
     "category": "EARPHONE",
     "color": "BLACK",
     "location": "체육관 입구",
     "foundAt": "2026-07-13T14:20:00Z",
     "storageLocation": "학생회실",
-    "features": "작은 흰색 별 스티커",
+    "observations": "작은 흰색 별 스티커",
     "privateFeature": "안쪽에 K 이니셜",
     "verificationQuestion": "스티커 모양은 무엇인가요?",
-    "description": "신발장 앞에서 발견",
 }
 
 LOST_PAYLOAD = {
@@ -100,6 +99,129 @@ def test_one_user_can_create_both_lost_and_found_posts(client):
     assert get_lost_matches(client, lost["id"], token) == []
 
 
+def test_found_post_content_is_generated_only_from_source_facts(client):
+    signup(client, "generated-found@example.com")
+    token = login(client, "generated-found@example.com")
+    response = client.post(
+        "/api/v1/found-posts",
+        json={
+            **FOUND_PAYLOAD,
+            "location": "강당 입구",
+            "observations": "앞면에 파란색 학교 로고",
+            "privateFeature": "이름 초성 ㄱㅌㅇ",
+            "verificationQuestion": "이름의 초성은?",
+        },
+        headers=auth(token),
+    )
+
+    assert response.status_code == 201
+    data = response.get_json()["data"]
+    post = data["post"]
+    assert post["title"] == "강당 입구에서 검정색 이어폰/이어폰 케이스 습득"
+    assert post["features"] == "앞면에 파란색 학교 로고"
+    assert post["description"] == "2026-07-13 14:20 UTC에 강당 입구에서 발견했습니다."
+    assert post["observations"] == "앞면에 파란색 학교 로고"
+    assert post["contentGenerator"] == "grounded-template-v1"
+    assert data["contentGeneration"] == {
+        "generator": "grounded-template-v1",
+        "sourceFields": ["category", "color", "location", "foundAt", "observations"],
+    }
+
+    public = client.get(f"/api/v1/found-posts/{post['id']}").get_json()["data"]
+    assert "observations" not in public
+    assert "privateFeature" not in public
+    assert "verificationQuestion" not in public
+
+
+def test_found_post_llm_never_receives_private_fields(client, app, monkeypatch):
+    captured = {}
+    generated = {
+        "title": "체육관 입구에서 검정색 이어폰을 주웠습니다",
+        "features": "검정색 이어폰이며 흰색 별 스티커가 있습니다.",
+        "description": "2026년 7월 13일 14시 20분에 체육관 입구에서 발견했습니다.",
+    }
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"message": {"content": json.dumps(generated, ensure_ascii=False)}}
+
+    class FakeClient:
+        def __init__(self, timeout):
+            captured["timeout"] = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def post(self, url, json):
+            captured["body"] = json
+            return FakeResponse()
+
+    signup(client, "private-grounding@example.com")
+    token = login(client, "private-grounding@example.com")
+    monkeypatch.setattr("app.services.found_content.httpx.Client", FakeClient)
+    app.config.update(OLLAMA_ENABLED=True, OLLAMA_CONTENT_TIMEOUT_SECONDS=20)
+    response = client.post(
+        "/api/v1/found-posts",
+        json={
+            **FOUND_PAYLOAD,
+            "storageLocation": "비공개 보관함 7번",
+            "privateFeature": "비공개 이름 초성 ㅂㄱㅈ",
+            "verificationQuestion": "비공개 질문은?",
+            "imageUrl": "/uploads/private-image.jpg",
+        },
+        headers=auth(token),
+    )
+
+    assert response.status_code == 201
+    assert response.get_json()["data"]["post"]["contentGenerator"].startswith("ollama:")
+    request_text = json.dumps(captured["body"], ensure_ascii=False)
+    assert "비공개 보관함" not in request_text
+    assert "비공개 이름 초성" not in request_text
+    assert "비공개 질문" not in request_text
+    assert "private-image" not in request_text
+    assert json.loads(captured["body"]["messages"][1]["content"]) == {
+        "sourceFacts": {
+            "category": "이어폰/이어폰 케이스",
+            "color": "검정색",
+            "location": "체육관 입구",
+            "foundAt": "2026-07-13T14:20:00+00:00",
+            "observations": "작은 흰색 별 스티커",
+        }
+    }
+
+
+def test_found_post_content_regeneration_and_manual_edit_rejection(client):
+    signup(client, "regenerate-found@example.com")
+    token = login(client, "regenerate-found@example.com")
+    post = create_found(client, token)
+
+    rejected = client.patch(
+        f"/api/v1/found-posts/{post['id']}",
+        json={"title": "사용자가 직접 정한 제목"},
+        headers=auth(token),
+    )
+    assert rejected.status_code == 422
+    assert rejected.get_json()["error"]["code"] == "VALIDATION_FAILED"
+
+    regenerated = client.patch(
+        f"/api/v1/found-posts/{post['id']}",
+        json={"location": "도서관 입구", "observations": "손잡이에 흰색 테이프"},
+        headers=auth(token),
+    )
+    assert regenerated.status_code == 200
+    data = regenerated.get_json()["data"]
+    assert data["post"]["title"].startswith("도서관 입구에서")
+    assert data["post"]["features"] == "손잡이에 흰색 테이프"
+    assert data["post"]["observations"] == "손잡이에 흰색 테이프"
+    assert data["analysisQueued"] is True
+
+
 def test_category_enum_is_exposed_and_validated(client):
     response = client.get("/api/v1/categories")
     assert response.status_code == 200
@@ -166,7 +288,6 @@ def test_candidate_query_excludes_different_category_tag(client):
         client,
         user_b_token,
         category="WALLET",
-        title="체육관에서 검정 지갑 주움",
     )
     earphone = create_found(client, user_b_token)
     lost = create_lost(client, user_a_token)
@@ -190,8 +311,7 @@ def test_found_registration_queries_only_same_tag_lost_posts(client):
         client,
         user_b_token,
         category="WALLET",
-        title="학생증처럼 생긴 카드지갑 주움",
-        features="파란색 학교 로고",
+        observations="파란색 학교 로고",
     )
     assert get_lost_matches(client, card_lost["id"], user_a_token) == []
 
@@ -199,8 +319,7 @@ def test_found_registration_queries_only_same_tag_lost_posts(client):
         client,
         user_b_token,
         category="CARD",
-        title="학생증 주움",
-        features="파란색 학교 로고",
+        observations="파란색 학교 로고",
     )
     items = get_lost_matches(client, card_lost["id"], user_a_token)
     assert {item["foundPostId"] for item in items} == {card_found["id"]}
@@ -273,8 +392,8 @@ def test_public_lists_filter_by_exact_category_tag(client):
     user_a_token, user_b_token = create_users(client)
     create_lost(client, user_a_token, category="CARD", title="학생증 분실")
     create_lost(client, user_a_token, category="WALLET", title="지갑 분실")
-    create_found(client, user_b_token, category="CARD", title="학생증 습득")
-    create_found(client, user_b_token, category="WALLET", title="지갑 습득")
+    create_found(client, user_b_token, category="CARD")
+    create_found(client, user_b_token, category="WALLET")
 
     lost_items = client.get("/api/v1/lost-posts?category=CARD").get_json()["data"]["items"]
     found_items = client.get("/api/v1/found-posts?category=CARD").get_json()["data"]["items"]

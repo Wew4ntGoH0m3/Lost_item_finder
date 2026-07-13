@@ -11,8 +11,8 @@
 | 카테고리 | 별도 테이블 없이 공통 `ItemCategory` Enum 태그 사용 |
 | 데이터베이스 | PostgreSQL 16, SQLAlchemy, Alembic |
 | 비동기 분석 | Redis + Celery |
-| AI | Ollama `qwen3:4b`, 실패 시 `rule-v1` |
-| 이미지 | EC2 디스크 저장, Nginx 직접 제공 |
+| AI | Ollama `qwen3:4b`, 습득글 자동 작성과 매칭 분석 모두 `think: false` |
+| 이미지 | Base64 미사용, multipart 업로드 후 EC2 디스크 저장·Nginx 제공 |
 | 실시간 채팅 | Flask-SocketIO + Redis, 매칭 당사자 전용 |
 | 핵심 테이블 | `users`, `lost_posts`, `found_posts`, `matches`, `chat_rooms`, `chat_messages` |
 
@@ -29,6 +29,7 @@
 | 사용자 구분 | 모든 계정은 동일한 일반 사용자 | 한 사용자가 분실글·습득글 모두 작성 가능 |
 | 회원가입 API | `POST /api/v1/auth/signup` 유지 | Postman에서 시연 계정을 사전 생성 |
 | 자유 문자열 카테고리 | `ItemCategory` Enum으로 제한 | 오타와 표현 차이 방지 |
+| 습득글 내용 입력 | 공개 사실만 받고 제목·특징·설명은 LLM 자동 생성 | 작성 부담과 임의 추측 최소화 |
 | 전체 후보 조회 | 동일 시설·동일 태그·다른 작성자·상태·시간 조건 SQL 선필터 | 자기 게시글과 다른 물건 혼입 및 LLM 입력량 감소 |
 | AI | Ollama `qwen3:4b` 사용 | 별도 외부 API 키 없이 시연 |
 | 채팅 | 수령 요청 후 당사자 전용 Socket.IO 방 생성 | 앱 내 연락과 대화 내역 보존 |
@@ -68,16 +69,18 @@ Flask API :8000
               `---- Ollama 100.102.0.2:11434 / qwen3:4b
 ```
 
-### 자동 분석 처리
+### 습득글 자동 작성 및 분석 처리
 
 1. Flask가 JWT 사용자, 입력값, Enum 태그를 검증한다.
-2. 게시글을 PostgreSQL에 저장한다.
-3. Celery 분석 작업을 큐에 넣고 API는 `201`을 반환한다.
-4. Worker가 동일 태그 후보만 SQL로 조회한다.
-5. 후보가 있으면 Ollama에 공개 필드만 전달한다.
-6. 서버가 Ollama의 후보 ID와 항목별 점수를 검증한다.
-7. Ollama 장애 시 `rule-v1`으로 대체한다.
-8. 총점 50점 이상만 `matches`에 저장한다.
+2. 습득글이면 `category`, `color`, `location`, `foundAt`, `observations`만 Ollama에 전달한다.
+3. Ollama가 `title`, `features`, `description`을 JSON으로 작성한다. `think`는 끈다.
+4. 생성 결과가 근거 검증을 통과하지 못하면 공개 사실 기반 템플릿으로 대체한다.
+5. 게시글과 원본 관찰 정보, 생성기 버전을 PostgreSQL에 저장한다.
+6. Celery 분석 작업을 큐에 넣고 API는 `201`을 반환한다.
+7. Worker가 동일 태그 후보만 SQL로 조회한다.
+8. 후보가 있으면 Ollama에 공개 필드만 전달하고 후보 ID와 점수를 검증한다.
+9. 매칭 Ollama 장애 시 `rule-v1`으로 대체한다.
+10. 총점 50점 이상만 `matches`에 저장한다.
 
 ## 4. ItemCategory Enum 태그
 
@@ -125,12 +128,14 @@ Flask API :8000
 | `id` | BIGINT | Y | PK |
 | `user_id` | BIGINT | Y | FK -> `users.id`, 작성자 |
 | `site_code` | VARCHAR(50) | Y | 학교·행사장 코드 |
-| `title` | VARCHAR(100) | Y | 제목 |
+| `title` | VARCHAR(100) | Y | LLM 또는 근거 템플릿으로 생성된 제목 |
 | `category` | `ItemCategory` Enum | Y | 후보 선필터 태그 |
 | `color` | VARCHAR(30) | Y | 대표 색상 |
 | `location` | VARCHAR(100) | Y | 분실 위치 |
 | `lost_at` | DATETIME | Y | 분실 추정 시각 |
-| `features` | TEXT | Y | 공개 특징 |
+| `features` | TEXT | Y | 자동 생성된 공개 특징 |
+| `source_observations` | TEXT | Y | 사용자가 입력한 공개 관찰 사실, 작성자에게만 반환 |
+| `content_generator` | VARCHAR(100) | Y | `ollama:{model}` 또는 `grounded-template-v1` |
 | `private_feature` | TEXT | N | 작성자에게만 반환 |
 | `description` | TEXT | N | 추가 설명 |
 | `image_url` | VARCHAR(500) | N | 이미지 URL |
@@ -238,6 +243,7 @@ FROM found_posts
 WHERE site_code = :lost_site_code
   AND status = 'STORED'
   AND category = :lost_category
+  AND user_id != :lost_author_id
   AND found_at >= :lost_at
 ORDER BY found_at ASC
 LIMIT 100;
@@ -251,6 +257,7 @@ FROM lost_posts
 WHERE site_code = :found_site_code
   AND status = 'OPEN'
   AND category = :found_category
+  AND user_id != :found_author_id
   AND lost_at <= :found_at
 ORDER BY lost_at DESC
 LIMIT 100;
@@ -258,7 +265,29 @@ LIMIT 100;
 
 분실 태그가 `CARD`이면 `WALLET`, `EARPHONE`, `BAG` 습득글은 제목과 특징이 비슷해도 AI에 전달하지 않는다.
 
-## 7. 점수와 Ollama
+## 7. Ollama 습득글 작성과 매칭 점수
+
+### 습득글 내용 자동 작성
+
+LLM에 전달하는 `sourceFacts`는 아래 다섯 필드로 제한한다. `observations`는 선택값이며 나머지는 필수다.
+
+```json
+{
+  "sourceFacts": {
+    "category": "카드/학생증",
+    "color": "파란색",
+    "location": "강당 입구",
+    "foundAt": "2026-07-13T14:15:00+00:00",
+    "observations": "앞면에 파란색 학교 로고"
+  }
+}
+```
+
+`storageLocation`, `privateFeature`, `verificationQuestion`, `imageUrl`과 이미지 바이너리는 LLM 요청에 포함하지 않는다. 요청 옵션은 `think: false`, `temperature: 0`, `stream: false`이며 응답은 `title`, `features`, `description`만 허용하는 JSON Schema로 제한한다.
+
+서버는 필수 장소·색상·카테고리가 결과에 포함되는지, 출력 숫자가 입력에 존재하는 숫자인지, 필드 길이가 DB 제약을 만족하는지 검증한다. 실패·타임아웃·잘못된 JSON·근거 검증 실패 시 `grounded-template-v1`을 사용한다.
+
+### 매칭 점수
 
 | 항목 | 배점 | 기준 |
 |---|---:|---|
@@ -360,10 +389,10 @@ Authorization: Bearer {accessToken}
 
 | Method | URL | 권한 | 기능 |
 |---|---|---|---|
-| POST | `/found-posts` | JWT | 등록·자동 분석 예약 |
+| POST | `/found-posts` | JWT | 공개 사실로 내용 자동 작성·등록·분석 예약 |
 | GET | `/found-posts` | 공개 | 기본 `STORED` 목록·태그 검색 |
 | GET | `/found-posts/{id}` | 공개 | 상세, 작성자는 비공개 정보 포함 |
-| PATCH | `/found-posts/{id}` | 작성자 | 수정·재분석 |
+| PATCH | `/found-posts/{id}` | 작성자 | 입력 사실 수정·내용 재생성·재분석 |
 | DELETE | `/found-posts/{id}` | 작성자 | 삭제 |
 
 ### 매칭·인계
@@ -408,21 +437,19 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "siteCode": "SCHOOL_001",
-  "title": "강당 입구에서 학생증 주움",
   "category": "CARD",
   "color": "BLUE",
   "location": "강당 입구",
   "foundAt": "2026-07-13T14:15:00Z",
   "storageLocation": "학생회실",
-  "features": "앞면에 파란색 학교 로고",
+  "observations": "앞면에 파란색 학교 로고",
   "privateFeature": "이름 초성 ㄱㅌㅇ",
   "verificationQuestion": "학생증 이름의 초성은 무엇인가요?",
-  "description": "출입문 옆에서 발견",
   "imageUrl": "/uploads/example.jpg"
 }
 ```
 
-두 요청의 태그가 모두 `CARD`이므로 비교 후보가 된다.
+습득글 응답의 `post.title`, `post.features`, `post.description`은 서버가 생성하며 `post.contentGenerator`에서 생성 방식을 확인한다. 두 요청의 태그가 모두 `CARD`이므로 비교 후보가 된다.
 
 ## 11. Socket.IO 채팅
 
@@ -566,6 +593,9 @@ API는 WebSocket 연결 유지를 위해 Gunicorn 1 worker·thread 모드로 실
 - 허용되지 않은 태그가 API와 DB에서 거절된다.
 - 양방향 후보 SQL이 동일 태그만 조회한다.
 - Ollama 실패 시 규칙 점수로 계속 동작한다.
+- 습득글 제목·특징·설명은 공개 입력 사실만으로 자동 작성된다.
+- 습득글 생성과 매칭의 Ollama 요청은 모두 `think: false`다.
+- 보관 위치·비공개 특징·확인 질문·이미지는 습득글 작성 LLM에 전달되지 않는다.
 - 수령 요청 시 당사자 전용 채팅방이 한 개만 생성된다.
 - Socket.IO JWT 인증, 실시간 메시지, 중복 방지, 읽음 처리가 동작한다.
 - 제3자는 채팅방 조회·입장·메시지 전송이 차단된다.

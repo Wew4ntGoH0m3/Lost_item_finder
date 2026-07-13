@@ -938,7 +938,7 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\n  \"siteCode\": \"SCHOOL_001\",\n  \"title\": \"강당 입구에서 학생증 주움\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:15:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"features\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는?\",\n  \"description\": \"출입문 옆에서 발견\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
+            "text": "{\n  \"siteCode\": \"SCHOOL_001\",\n  \"category\": \"CARD\",\n  \"color\": \"BLUE\",\n  \"location\": \"강당 입구\",\n  \"foundAt\": \"2026-07-13T14:15:00Z\",\n  \"storageLocation\": \"학생회실\",\n  \"observations\": \"앞면에 파란색 학교 로고\",\n  \"privateFeature\": \"학번 끝 두 자리 42\",\n  \"verificationQuestion\": \"학번 끝 두 자리는?\",\n  \"imageUrl\": \"/uploads/{{imageFileName}}\"\n}",
             "params": []
           }
         },
@@ -965,7 +965,7 @@
           "receive": 0
         },
         "_name": "Create found post",
-        "_description": "",
+        "_description": "title, features, description은 공개 입력 사실만으로 서버가 자동 생성합니다.",
         "_expectedStatus": 201
       },
       {
@@ -1111,7 +1111,7 @@
           "bodySize": -1,
           "postData": {
             "mimeType": "application/json",
-            "text": "{\n  \"storageLocation\": \"학생회실 보관함 2번\"\n}",
+            "text": "{\n  \"storageLocation\": \"학생회실 보관함 2번\",\n  \"observations\": \"앞면에 파란색 학교 로고, 모서리에 작은 흠집\"\n}",
             "params": []
           }
         },
@@ -1138,7 +1138,7 @@
           "receive": 0
         },
         "_name": "Update found post",
-        "_description": "",
+        "_description": "observations 변경 시 자동 생성 내용을 갱신합니다.",
         "_expectedStatus": 200
       },
       {

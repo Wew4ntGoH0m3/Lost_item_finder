@@ -153,7 +153,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{password}}\",\n  \"device\": {\n    \"platform\": \"ANDROID\",\n    \"pushToken\": \"postman-user-a-push-token\"\n  }\n}",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -200,7 +200,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{password}}\",\n  \"device\": {\n    \"platform\": \"ANDROID\",\n    \"pushToken\": \"postman-user-b-push-token\"\n  }\n}",
+              "raw": "{\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -378,55 +378,6 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nickname\": \"Postman사용자A수정\",\n  \"profileImageUrl\": \"{{imageUrl}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update User A Push Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.expect(pm.response.code).to.eql(200);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{userAAccessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/api/v1/users/me/push-token",
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"platform\": \"ANDROID\",\n  \"pushToken\": \"postman-user-a-updated-token\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

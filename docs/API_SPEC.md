@@ -115,8 +115,6 @@ Flask API :8000
 | `nickname` | VARCHAR(20) | Y | 표시 이름 |
 | `site_code` | VARCHAR(50) | Y | 소속 학교·행사장 |
 | `profile_image_url` | VARCHAR(500) | N | 프로필 이미지 |
-| `platform` | VARCHAR(20) | N | `ANDROID`, `IOS` |
-| `push_token` | VARCHAR(500) | N | 앱 푸시 토큰 |
 | `is_active` | BOOLEAN | Y | 계정 활성 상태 |
 | `created_at` | DATETIME | Y | 생성 시각 |
 | `updated_at` | DATETIME | Y | 수정 시각 |
@@ -362,7 +360,6 @@ Authorization: Bearer {accessToken}
 | POST | `/auth/refresh` | Refresh JWT | Access Token 갱신 |
 | GET | `/users/me` | JWT | 내 정보 조회 |
 | PATCH | `/users/me` | JWT | 닉네임·프로필 수정 |
-| PATCH | `/users/me/push-token` | JWT | 앱 푸시 토큰 저장 |
 
 ### 공통
 

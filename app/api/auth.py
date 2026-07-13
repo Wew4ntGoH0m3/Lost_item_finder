@@ -65,13 +65,6 @@ def login():
     ):
         raise ApiError("INVALID_CREDENTIALS", "이메일 또는 비밀번호가 다릅니다.", 401)
 
-    device = payload.get("device") or {}
-    if device.get("platform") in {"ANDROID", "IOS"}:
-        user.platform = device["platform"]
-    if device.get("pushToken"):
-        user.push_token = device["pushToken"]
-    db.session.commit()
-
     identity = str(user.id)
     return success(
         {

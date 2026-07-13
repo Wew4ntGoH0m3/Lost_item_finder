@@ -67,8 +67,6 @@ class User(TimestampMixin, db.Model):
     nickname: Mapped[str] = mapped_column(db.String(20))
     site_code: Mapped[str] = mapped_column(db.String(50), index=True)
     profile_image_url: Mapped[str | None] = mapped_column(db.String(500))
-    platform: Mapped[str | None] = mapped_column(db.String(20))
-    push_token: Mapped[str | None] = mapped_column(db.String(500))
     is_active: Mapped[bool] = mapped_column(default=True)
 
     lost_posts: Mapped[list[LostPost]] = relationship(
@@ -89,7 +87,6 @@ class User(TimestampMixin, db.Model):
             "nickname": self.nickname,
             "siteCode": self.site_code,
             "profileImageUrl": self.profile_image_url,
-            "platform": self.platform,
             "isActive": self.is_active,
             "createdAt": self.created_at.isoformat(),
             "updatedAt": self.updated_at.isoformat(),

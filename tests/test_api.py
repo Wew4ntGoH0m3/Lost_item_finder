@@ -82,6 +82,7 @@ def test_postman_signup_login_and_jwt_protection(client):
     assert unauthorized.status_code == 401
     assert authorized.status_code == 201
     assert "role" not in user
+    assert "platform" not in user
 
 
 def test_logout_is_client_side_only(client):
@@ -92,6 +93,14 @@ def test_logout_is_client_side_only(client):
 
     assert response.status_code == 404
     assert response.get_json()["error"]["code"] == "ROUTE_NOT_FOUND"
+
+    push_response = client.patch(
+        "/api/v1/users/me/push-token",
+        json={"platform": "ANDROID", "pushToken": "unused-token"},
+        headers=auth(token),
+    )
+    assert push_response.status_code == 404
+    assert push_response.get_json()["error"]["code"] == "ROUTE_NOT_FOUND"
 
 
 def test_one_user_can_create_both_lost_and_found_posts(client):

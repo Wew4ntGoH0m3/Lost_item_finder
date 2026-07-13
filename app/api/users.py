@@ -28,20 +28,3 @@ def update_me():
         user.profile_image_url = payload["profileImageUrl"] or None
     db.session.commit()
     return success(user.public_dict())
-
-
-@bp.patch("/me/push-token")
-@jwt_required()
-def update_push_token():
-    user = current_user()
-    payload = body()
-    platform = payload.get("platform")
-    if platform not in {"ANDROID", "IOS"}:
-        raise ApiError("VALIDATION_FAILED", "platform은 ANDROID 또는 IOS입니다.", 422)
-    token = str(payload.get("pushToken", "")).strip()
-    if not token:
-        raise ApiError("VALIDATION_FAILED", "pushToken이 필요합니다.", 422)
-    user.platform = platform
-    user.push_token = token
-    db.session.commit()
-    return success({"platform": platform, "registered": True})

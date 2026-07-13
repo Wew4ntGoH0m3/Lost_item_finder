@@ -1,10 +1,8 @@
 import pytest
-from werkzeug.security import generate_password_hash
 
 from app import create_app
 from app.config import TestConfig
 from app.extensions import db
-from app.models import User
 
 
 @pytest.fixture()
@@ -25,21 +23,6 @@ def app(tmp_path):
 @pytest.fixture()
 def client(app):
     return app.test_client()
-
-
-@pytest.fixture()
-def admin(app):
-    with app.app_context():
-        user = User(
-            email="admin@example.com",
-            password_hash=generate_password_hash("AdminPass123!"),
-            nickname="관리자",
-            site_code="SCHOOL_001",
-            role="ADMIN",
-        )
-        db.session.add(user)
-        db.session.commit()
-        return user.id
 
 
 def signup(client, email, nickname="사용자"):

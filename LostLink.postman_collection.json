@@ -2,16 +2,16 @@
   "info": {
     "_postman_id": "2f7ebd4c-7c2e-4db7-b265-f5122cf4eb27",
     "name": "LostLink Backend API",
-    "description": "LostLink Flask API Postman Collection v2.1\n\n권장 실행 순서: Auth Setup -> Upload(선택) -> Found Posts -> Lost Posts -> Matching and Claim -> Chats.\n회원가입은 앱 기능이 아니라 Postman 시연 계정 생성용입니다.\n각 생성/로그인 응답은 JWT와 ID를 collection variable에 자동 저장합니다.\nSocket.IO 설정은 마지막 폴더 설명을 확인하세요.",
+    "description": "LostLink Flask API Postman Collection v2.1\n\n권장 실행 순서: Auth Setup -> Upload(선택) -> Found Posts -> Lost Posts -> Matching and Claim -> Chats.\nUser A와 User B는 동일한 일반 사용자이며 각 계정은 분실글과 습득글을 모두 작성할 수 있습니다.\n회원가입은 앱 기능이 아니라 Postman 시연 계정 생성용입니다.\n각 생성/로그인 응답은 JWT와 ID를 collection variable에 자동 저장합니다.\nSocket.IO 설정은 마지막 폴더 설명을 확인하세요.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "01. Auth Setup",
-      "description": "Owner와 Finder 회원가입을 먼저 실행한 뒤 로그인합니다. 회원가입 요청이 매번 고유 이메일을 collection variable에 저장합니다.",
+      "description": "User A와 User B는 같은 유형의 일반 사용자입니다. 두 계정 모두 분실글과 습득글을 작성할 수 있으며, 회원가입 후 각각 로그인합니다.",
       "item": [
         {
-          "name": "Signup Owner (Postman only)",
+          "name": "Signup User A (Postman only)",
           "event": [
             {
               "listen": "prerequest",
@@ -20,7 +20,7 @@
                 "packages": {},
                 "exec": [
                   "const suffix = Date.now();",
-                  "pm.collectionVariables.set(\"ownerEmail\", \"postman-owner-\" + suffix + \"@example.com\");"
+                  "pm.collectionVariables.set(\"userAEmail\", \"postman-user-a-\" + suffix + \"@example.com\");"
                 ]
               }
             },
@@ -53,7 +53,7 @@
             "description": "앱에서는 호출하지 않는 Postman 시연 계정 생성 요청입니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman분실자\",\n  \"siteCode\": \"{{siteCode}}\"\n}",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman사용자A\",\n  \"siteCode\": \"{{siteCode}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -64,7 +64,7 @@
           "response": []
         },
         {
-          "name": "Signup Finder (Postman only)",
+          "name": "Signup User B (Postman only)",
           "event": [
             {
               "listen": "prerequest",
@@ -73,7 +73,7 @@
                 "packages": {},
                 "exec": [
                   "const suffix = Date.now();",
-                  "pm.collectionVariables.set(\"finderEmail\", \"postman-finder-\" + suffix + \"@example.com\");"
+                  "pm.collectionVariables.set(\"userBEmail\", \"postman-user-b-\" + suffix + \"@example.com\");"
                 ]
               }
             },
@@ -106,7 +106,7 @@
             "description": "앱에서는 호출하지 않는 Postman 시연 계정 생성 요청입니다.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{finderEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman습득자\",\n  \"siteCode\": \"{{siteCode}}\"\n}",
+              "raw": "{\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"Postman사용자B\",\n  \"siteCode\": \"{{siteCode}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -117,7 +117,7 @@
           "response": []
         },
         {
-          "name": "Login Owner",
+          "name": "Login User A",
           "event": [
             {
               "listen": "test",
@@ -130,8 +130,8 @@
                   "});",
                   "if (pm.response.code === 200) {",
                   "    const data = pm.response.json().data;",
-                  "    pm.collectionVariables.set(\"ownerAccessToken\", data.accessToken);",
-                  "    pm.collectionVariables.set(\"ownerRefreshToken\", data.refreshToken);",
+                  "    pm.collectionVariables.set(\"userAAccessToken\", data.accessToken);",
+                  "    pm.collectionVariables.set(\"userARefreshToken\", data.refreshToken);",
                   "}"
                 ]
               }
@@ -153,7 +153,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\",\n  \"device\": {\n    \"platform\": \"ANDROID\",\n    \"pushToken\": \"postman-owner-push-token\"\n  }\n}",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{password}}\",\n  \"device\": {\n    \"platform\": \"ANDROID\",\n    \"pushToken\": \"postman-user-a-push-token\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -164,7 +164,7 @@
           "response": []
         },
         {
-          "name": "Login Finder",
+          "name": "Login User B",
           "event": [
             {
               "listen": "test",
@@ -177,8 +177,8 @@
                   "});",
                   "if (pm.response.code === 200) {",
                   "    const data = pm.response.json().data;",
-                  "    pm.collectionVariables.set(\"finderAccessToken\", data.accessToken);",
-                  "    pm.collectionVariables.set(\"finderRefreshToken\", data.refreshToken);",
+                  "    pm.collectionVariables.set(\"userBAccessToken\", data.accessToken);",
+                  "    pm.collectionVariables.set(\"userBRefreshToken\", data.refreshToken);",
                   "}"
                 ]
               }
@@ -200,7 +200,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{finderEmail}}\",\n  \"password\": \"{{password}}\",\n  \"device\": {\n    \"platform\": \"ANDROID\",\n    \"pushToken\": \"postman-finder-push-token\"\n  }\n}",
+              "raw": "{\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{password}}\",\n  \"device\": {\n    \"platform\": \"ANDROID\",\n    \"pushToken\": \"postman-user-b-push-token\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -211,7 +211,7 @@
           "response": []
         },
         {
-          "name": "Login Admin",
+          "name": "Refresh User A Token",
           "event": [
             {
               "listen": "test",
@@ -222,54 +222,7 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.expect(pm.response.code).to.eql(200);",
                   "});",
-                  "if (pm.response.code === 200) {",
-                  "    const data = pm.response.json().data;",
-                  "    pm.collectionVariables.set(\"adminAccessToken\", data.accessToken);",
-                  "    pm.collectionVariables.set(\"adminRefreshToken\", data.refreshToken);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": "{{baseUrl}}/api/v1/auth/login",
-            "description": "서버 CLI로 생성한 관리자 이메일과 비밀번호를 collection variable에 입력한 뒤 실행합니다.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Refresh Owner Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.expect(pm.response.code).to.eql(200);",
-                  "});",
-                  "if (pm.response.code === 200) pm.collectionVariables.set(\"ownerAccessToken\", pm.response.json().data.accessToken);"
+                  "if (pm.response.code === 200) pm.collectionVariables.set(\"userAAccessToken\", pm.response.json().data.accessToken);"
                 ]
               }
             }
@@ -282,7 +235,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerRefreshToken}}",
+                  "value": "{{userARefreshToken}}",
                   "type": "string"
                 }
               ]
@@ -293,7 +246,7 @@
           "response": []
         },
         {
-          "name": "Logout Owner",
+          "name": "Logout User A",
           "event": [
             {
               "listen": "test",
@@ -316,7 +269,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -386,7 +339,7 @@
           "response": []
         },
         {
-          "name": "Get Owner Profile",
+          "name": "Get User A Profile",
           "event": [
             {
               "listen": "test",
@@ -409,7 +362,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -420,7 +373,7 @@
           "response": []
         },
         {
-          "name": "Update Owner Profile",
+          "name": "Update User A Profile",
           "event": [
             {
               "listen": "test",
@@ -449,7 +402,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -458,7 +411,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nickname\": \"Postman분실자수정\",\n  \"profileImageUrl\": \"{{imageUrl}}\"\n}",
+              "raw": "{\n  \"nickname\": \"Postman사용자A수정\",\n  \"profileImageUrl\": \"{{imageUrl}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -469,7 +422,7 @@
           "response": []
         },
         {
-          "name": "Update Owner Push Token",
+          "name": "Update User A Push Token",
           "event": [
             {
               "listen": "test",
@@ -498,7 +451,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -507,7 +460,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"platform\": \"ANDROID\",\n  \"pushToken\": \"postman-owner-updated-token\"\n}",
+              "raw": "{\n  \"platform\": \"ANDROID\",\n  \"pushToken\": \"postman-user-a-updated-token\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -552,7 +505,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -646,7 +599,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -699,7 +652,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -769,7 +722,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -809,7 +762,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -867,7 +820,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -937,7 +890,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -977,7 +930,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1020,7 +973,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1067,7 +1020,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1101,7 +1054,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1135,7 +1088,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1176,7 +1129,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1225,7 +1178,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1260,7 +1213,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1294,7 +1247,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1332,7 +1285,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1372,7 +1325,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1420,7 +1373,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1431,7 +1384,7 @@
           "response": []
         },
         {
-          "name": "Handover Match (Admin)",
+          "name": "Handover Match (Found Post Author)",
           "event": [
             {
               "listen": "test",
@@ -1454,13 +1407,13 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{adminAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
             },
             "url": "{{baseUrl}}/api/v1/matches/{{matchId}}/handover",
-            "description": "관리자 계정과 adminAccessToken이 필요합니다."
+            "description": "습득글 작성자인 User B가 인계 완료 처리합니다."
           },
           "response": []
         }
@@ -1500,7 +1453,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1543,7 +1496,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1577,7 +1530,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{finderAccessToken}}",
+                  "value": "{{userBAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1611,7 +1564,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{ownerAccessToken}}",
+                  "value": "{{userAAccessToken}}",
                   "type": "string"
                 }
               ]
@@ -1625,7 +1578,7 @@
     },
     {
       "name": "10. Socket.IO Setup",
-      "description": "Postman Collection v2.1 스키마는 Socket.IO 요청 자체를 저장하지 못합니다.\nPostman에서 New > Socket.IO를 선택하고 URL을 {{baseUrl}}로 입력합니다.\nHandshake auth payload: {\"token\":\"ownerAccessToken 변수의 실제 값\"}\n클라이언트 이벤트:\njoin_chat {\"roomId\": {{chatRoomId}}}\nsend_message {\"roomId\": {{chatRoomId}}, \"content\":\"안녕하세요\", \"clientMessageId\":\"postman-001\"}\ntyping {\"roomId\": {{chatRoomId}}, \"isTyping\":true}\nmark_read {\"roomId\": {{chatRoomId}}, \"messageId\": {{messageId}}}\n서버 이벤트: connected, new_message, typing, messages_read",
+      "description": "Postman Collection v2.1 스키마는 Socket.IO 요청 자체를 저장하지 못합니다.\nPostman에서 New > Socket.IO를 선택하고 URL을 {{baseUrl}}로 입력합니다.\nHandshake auth payload: {\"token\":\"userAAccessToken 변수의 실제 값\"}\n클라이언트 이벤트:\njoin_chat {\"roomId\": {{chatRoomId}}}\nsend_message {\"roomId\": {{chatRoomId}}, \"content\":\"안녕하세요\", \"clientMessageId\":\"postman-001\"}\ntyping {\"roomId\": {{chatRoomId}}, \"isTyping\":true}\nmark_read {\"roomId\": {{chatRoomId}}, \"messageId\": {{messageId}}}\n서버 이벤트: connected, new_message, typing, messages_read",
       "item": []
     }
   ],
@@ -1646,47 +1599,32 @@
       "type": "string"
     },
     {
-      "key": "ownerEmail",
+      "key": "userAEmail",
       "value": "",
       "type": "string"
     },
     {
-      "key": "finderEmail",
+      "key": "userBEmail",
       "value": "",
       "type": "string"
     },
     {
-      "key": "adminEmail",
-      "value": "admin@example.com",
-      "type": "string"
-    },
-    {
-      "key": "adminPassword",
+      "key": "userAAccessToken",
       "value": "",
       "type": "string"
     },
     {
-      "key": "ownerAccessToken",
+      "key": "userARefreshToken",
       "value": "",
       "type": "string"
     },
     {
-      "key": "ownerRefreshToken",
+      "key": "userBAccessToken",
       "value": "",
       "type": "string"
     },
     {
-      "key": "finderAccessToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "finderRefreshToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "adminAccessToken",
+      "key": "userBRefreshToken",
       "value": "",
       "type": "string"
     },

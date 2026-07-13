@@ -7,7 +7,7 @@ from ..models import FoundPost
 from ..utils import (
     body,
     current_user,
-    is_owner_or_admin,
+    is_owner,
     page_args,
     parse_category,
     parse_datetime,
@@ -46,7 +46,7 @@ def create_found_post():
     payload = body()
     require_fields(payload, REQUIRED)
     site_code = str(payload["siteCode"]).strip().upper()
-    if user.role != "ADMIN" and site_code != user.site_code:
+    if site_code != user.site_code:
         raise ApiError("FORBIDDEN", "소속 시설에만 게시글을 등록할 수 있습니다.", 403)
     post = FoundPost(
         user_id=user.id,
@@ -74,17 +74,8 @@ def create_found_post():
 
 @bp.get("")
 def list_found_posts():
-    user = current_user(optional=True)
     page, size = page_args()
-    statement = db.select(FoundPost)
-    requested_status = request.args.get("status")
-    if user and user.role == "ADMIN" and requested_status:
-        normalized_status = requested_status.upper()
-        if normalized_status not in {"STORED", "CLAIMED", "RETURNED", "CLOSED"}:
-            raise ApiError("VALIDATION_FAILED", "지원하지 않는 습득물 상태입니다.", 422)
-        statement = statement.where(FoundPost.status == normalized_status)
-    else:
-        statement = statement.where(FoundPost.status == "STORED")
+    statement = db.select(FoundPost).where(FoundPost.status == "STORED")
     for param, column in {
         "siteCode": FoundPost.site_code,
         "location": FoundPost.location,
@@ -117,7 +108,7 @@ def get_found_post(post_id):
     post = db.session.get(FoundPost, post_id)
     if not post:
         raise ApiError("FOUND_POST_NOT_FOUND", "습득글을 찾을 수 없습니다.", 404)
-    include_private = bool(user and is_owner_or_admin(user, post.user_id))
+    include_private = bool(user and is_owner(user, post.user_id))
     return success(post.to_dict(include_private=include_private))
 
 
@@ -128,7 +119,7 @@ def update_found_post(post_id):
     post = db.session.get(FoundPost, post_id)
     if not post:
         raise ApiError("FOUND_POST_NOT_FOUND", "습득글을 찾을 수 없습니다.", 404)
-    if not is_owner_or_admin(user, post.user_id):
+    if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "게시글 수정 권한이 없습니다.", 403)
     payload = body()
     needs_analysis = False
@@ -145,7 +136,7 @@ def update_found_post(post_id):
     if "status" in payload:
         allowed = {"STORED", "CLOSED"}
         status = str(payload["status"]).upper()
-        if user.role != "ADMIN" or status not in allowed:
+        if status not in allowed:
             raise ApiError("INVALID_STATUS_TRANSITION", "허용되지 않은 상태입니다.", 409)
         post.status = status
     db.session.commit()
@@ -163,7 +154,7 @@ def delete_found_post(post_id):
     post = db.session.get(FoundPost, post_id)
     if not post:
         raise ApiError("FOUND_POST_NOT_FOUND", "습득글을 찾을 수 없습니다.", 404)
-    if not is_owner_or_admin(user, post.user_id):
+    if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "게시글 삭제 권한이 없습니다.", 403)
     if post.status in {"CLAIMED", "RETURNED"}:
         raise ApiError(

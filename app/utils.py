@@ -68,8 +68,8 @@ def current_user(optional: bool = False) -> User | None:
     return user
 
 
-def is_owner_or_admin(user: User, owner_id: int) -> bool:
-    return user.role == "ADMIN" or user.id == owner_id
+def is_owner(user: User, owner_id: int) -> bool:
+    return user.id == owner_id
 
 
 def page_args():

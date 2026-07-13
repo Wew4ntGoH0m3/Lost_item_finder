@@ -114,6 +114,7 @@ def _candidate_query(lost: LostPost, candidate_ids=None):
             FoundPost.site_code == lost.site_code,
             FoundPost.status == "STORED",
             FoundPost.category == lost.category,
+            FoundPost.user_id != lost.user_id,
             FoundPost.found_at >= lost.lost_at,
         )
         .order_by(FoundPost.found_at.asc())
@@ -183,6 +184,7 @@ def analyze_found_post(found_post_id: int) -> dict:
             LostPost.site_code == found.site_code,
             LostPost.status == "OPEN",
             LostPost.category == found.category,
+            LostPost.user_id != found.user_id,
             LostPost.lost_at <= found.found_at,
         )
         .order_by(LostPost.lost_at.desc())

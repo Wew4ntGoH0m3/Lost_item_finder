@@ -65,7 +65,6 @@ class User(TimestampMixin, db.Model):
     email: Mapped[str] = mapped_column(db.String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(db.String(255))
     nickname: Mapped[str] = mapped_column(db.String(20))
-    role: Mapped[str] = mapped_column(db.String(20), default="USER", index=True)
     site_code: Mapped[str] = mapped_column(db.String(50), index=True)
     profile_image_url: Mapped[str | None] = mapped_column(db.String(500))
     platform: Mapped[str | None] = mapped_column(db.String(20))
@@ -88,7 +87,6 @@ class User(TimestampMixin, db.Model):
             "id": self.id,
             "email": self.email,
             "nickname": self.nickname,
-            "role": self.role,
             "siteCode": self.site_code,
             "profileImageUrl": self.profile_image_url,
             "platform": self.platform,

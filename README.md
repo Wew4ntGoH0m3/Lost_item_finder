@@ -6,12 +6,12 @@
 
 ## 핵심 기능
 
-- 로그인, Access/Refresh JWT, 게시글 소유권·관리자 권한
+- 단일 `User` 유형, 로그인·Access/Refresh JWT, 게시글 작성자 권한
 - 회원가입 API 유지, 모바일 앱 회원가입 화면 제외, Postman으로 시연 계정 생성
 - `CARD`, `WALLET`, `EARPHONE` 등 10개 공통 `ItemCategory` Enum
 - 같은 시설·카테고리·유효 상태·시간 범위의 후보만 SQL에서 조회
 - Ollama `qwen3:4b` 분석, 실패 시 `rule-v1` 자동 대체
-- 수령 요청 시 분실자·습득자 전용 채팅방 자동 생성
+- 수령 요청 시 분실글·습득글 작성자 전용 채팅방 자동 생성
 - Socket.IO 실시간 메시지·입력 상태·읽음 처리와 PostgreSQL 메시지 저장
 - Redis/Celery 비동기 분석, EC2 이미지 저장, Docker Compose 배포
 
@@ -51,7 +51,9 @@ python -m venv .venv
 
 ## 인증 운영
 
-백엔드는 HTTP 호출 도구를 구분할 수 없으므로 `/api/v1/auth/signup` 자체는 공개 상태로 유지합니다. 해커톤 앱에는 회원가입 화면과 호출 코드를 넣지 않고, 시연 담당자가 Postman으로 분실자·습득자 계정을 미리 생성합니다. 앱은 로그인만 제공하고 보호 API에 `Authorization: Bearer {accessToken}`을 전송합니다.
+백엔드는 HTTP 호출 도구를 구분할 수 없으므로 `/api/v1/auth/signup` 자체는 공개 상태로 유지합니다. 해커톤 앱에는 회원가입 화면과 호출 코드를 넣지 않고, 시연 담당자가 Postman으로 일반 사용자 계정을 미리 생성합니다. 앱은 로그인만 제공하고 보호 API에 `Authorization: Bearer {accessToken}`을 전송합니다.
+
+사용자 종류는 하나뿐이며 `role`이나 관리자 계정이 없습니다. 모든 사용자는 분실글과 습득글을 모두 작성할 수 있습니다. “분실글 작성자”와 “습득글 작성자”는 계정 종류가 아니라 특정 매칭에서의 게시글 소유 관계입니다.
 
 ## ItemCategory 태그
 
@@ -76,13 +78,14 @@ FROM found_posts
 WHERE site_code = :site_code
   AND status = 'STORED'
   AND category = :lost_category
+  AND user_id != :author_id
   AND found_at >= :lost_at;
 ```
 
 ## 채팅 흐름
 
-1. 분실자가 매칭 후보에 수령 요청을 보냅니다.
-2. 서버가 해당 Match의 분실자·습득자 멤버십으로 채팅방을 자동 생성합니다.
+1. 분실글 작성자가 매칭 후보에 수령 요청을 보냅니다.
+2. 서버가 해당 Match의 분실글·습득글 작성자를 멤버로 채팅방을 자동 생성합니다.
 3. 앱은 `/socket.io`에 Access Token으로 연결하고 `join_chat`으로 방에 입장합니다.
 4. `send_message` 메시지는 PostgreSQL에 먼저 저장된 뒤 양쪽 앱으로 전송됩니다.
 5. 재접속 시 `GET /api/v1/chats`와 `/chats/{id}/messages`로 상태를 복원합니다.
@@ -109,10 +112,10 @@ Socket.IO 연결 인증:
 | GET | `/api/v1/categories` | 공개 | Enum 태그 목록 |
 | POST/GET | `/api/v1/lost-posts` | 생성 JWT / 목록 공개 | 분실글 생성·조회 |
 | POST/GET | `/api/v1/found-posts` | 생성 JWT / 목록 공개 | 습득글 생성·조회 |
-| GET | `/api/v1/matches/lost-posts/{id}` | 작성자·관리자 | 동일 태그 매칭 후보 |
+| GET | `/api/v1/matches/lost-posts/{id}` | 분실글 작성자 | 동일 태그 매칭 후보 |
 | POST | `/api/v1/matches/{id}/claims` | 분실글 작성자 | 수령 요청·채팅방 생성 |
-| PATCH | `/api/v1/matches/{id}/verify` | 습득자·관리자 | 본인 확인 |
-| PATCH | `/api/v1/matches/{id}/handover` | 관리자 | 인계 완료 |
+| PATCH | `/api/v1/matches/{id}/verify` | 습득글 작성자 | 본인 확인 |
+| PATCH | `/api/v1/matches/{id}/handover` | 습득글 작성자 | 인계 완료 |
 | GET | `/api/v1/chats` | JWT | 내 채팅방 목록 |
 | GET | `/api/v1/chats/{id}/messages` | 채팅 참여자 | 메시지 내역 |
 | PATCH | `/api/v1/chats/{id}/read` | 채팅 참여자 | 읽음 위치 갱신 |

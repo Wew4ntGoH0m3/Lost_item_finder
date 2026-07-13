@@ -30,9 +30,9 @@ LOST_PAYLOAD = {
 
 
 def create_users(client):
-    signup(client, "owner@example.com", "분실자")
-    signup(client, "finder@example.com", "습득자")
-    return login(client, "owner@example.com"), login(client, "finder@example.com")
+    signup(client, "user-a@example.com", "사용자A")
+    signup(client, "user-b@example.com", "사용자B")
+    return login(client, "user-a@example.com"), login(client, "user-b@example.com")
 
 
 def create_found(client, token, **overrides):
@@ -55,23 +55,23 @@ def create_lost(client, token, **overrides):
     return response.get_json()["data"]["post"]
 
 
-def create_matching_posts(client, owner_token, finder_token):
-    found = create_found(client, finder_token)
-    lost = create_lost(client, owner_token)
+def create_matching_posts(client, user_a_token, user_b_token):
+    found = create_found(client, user_b_token)
+    lost = create_lost(client, user_a_token)
     return lost, found
 
 
-def get_lost_matches(client, lost_id, owner_token):
+def get_lost_matches(client, lost_id, user_a_token):
     response = client.get(
         f"/api/v1/matches/lost-posts/{lost_id}",
-        headers=auth(owner_token),
+        headers=auth(user_a_token),
     )
     assert response.status_code == 200
     return response.get_json()["data"]["items"]
 
 
 def test_postman_signup_login_and_jwt_protection(client):
-    signup(client, "postman-user@example.com", "포스트맨")
+    user = signup(client, "postman-user@example.com", "포스트맨")
     token = login(client, "postman-user@example.com")
 
     unauthorized = client.post("/api/v1/lost-posts", json=LOST_PAYLOAD)
@@ -82,6 +82,22 @@ def test_postman_signup_login_and_jwt_protection(client):
     )
     assert unauthorized.status_code == 401
     assert authorized.status_code == 201
+    assert "role" not in user
+
+
+def test_one_user_can_create_both_lost_and_found_posts(client):
+    signup(client, "both-posts@example.com", "통합사용자")
+    token = login(client, "both-posts@example.com")
+
+    lost = create_lost(client, token)
+    found = create_found(
+        client,
+        token,
+        foundAt="2026-07-13T14:30:00Z",
+    )
+
+    assert lost["userId"] == found["userId"]
+    assert get_lost_matches(client, lost["id"], token) == []
 
 
 def test_category_enum_is_exposed_and_validated(client):
@@ -113,16 +129,16 @@ def test_category_enum_is_exposed_and_validated(client):
 
 
 def test_private_fields_are_visible_only_to_owner(client):
-    owner_token, finder_token = create_users(client)
-    lost, found = create_matching_posts(client, owner_token, finder_token)
+    user_a_token, user_b_token = create_users(client)
+    lost, found = create_matching_posts(client, user_a_token, user_b_token)
 
     public_lost = client.get(f"/api/v1/lost-posts/{lost['id']}").get_json()["data"]
     owner_lost = client.get(
-        f"/api/v1/lost-posts/{lost['id']}", headers=auth(owner_token)
+        f"/api/v1/lost-posts/{lost['id']}", headers=auth(user_a_token)
     ).get_json()["data"]
     public_found = client.get(f"/api/v1/found-posts/{found['id']}").get_json()["data"]
     owner_found = client.get(
-        f"/api/v1/found-posts/{found['id']}", headers=auth(finder_token)
+        f"/api/v1/found-posts/{found['id']}", headers=auth(user_b_token)
     ).get_json()["data"]
 
     assert "privateFeature" not in public_lost
@@ -133,10 +149,10 @@ def test_private_fields_are_visible_only_to_owner(client):
 
 
 def test_registration_automatically_creates_same_tag_match(client):
-    owner_token, finder_token = create_users(client)
-    lost, found = create_matching_posts(client, owner_token, finder_token)
+    user_a_token, user_b_token = create_users(client)
+    lost, found = create_matching_posts(client, user_a_token, user_b_token)
 
-    items = get_lost_matches(client, lost["id"], owner_token)
+    items = get_lost_matches(client, lost["id"], user_a_token)
     assert len(items) == 1
     assert items[0]["foundPostId"] == found["id"]
     assert items[0]["score"] >= 85
@@ -145,85 +161,82 @@ def test_registration_automatically_creates_same_tag_match(client):
 
 
 def test_candidate_query_excludes_different_category_tag(client):
-    owner_token, finder_token = create_users(client)
+    user_a_token, user_b_token = create_users(client)
     wallet = create_found(
         client,
-        finder_token,
+        user_b_token,
         category="WALLET",
         title="체육관에서 검정 지갑 주움",
     )
-    earphone = create_found(client, finder_token)
-    lost = create_lost(client, owner_token)
+    earphone = create_found(client, user_b_token)
+    lost = create_lost(client, user_a_token)
 
-    items = get_lost_matches(client, lost["id"], owner_token)
+    items = get_lost_matches(client, lost["id"], user_a_token)
     found_ids = {item["foundPostId"] for item in items}
     assert found_ids == {earphone["id"]}
     assert wallet["id"] not in found_ids
 
 
 def test_found_registration_queries_only_same_tag_lost_posts(client):
-    owner_token, finder_token = create_users(client)
+    user_a_token, user_b_token = create_users(client)
     card_lost = create_lost(
         client,
-        owner_token,
+        user_a_token,
         category="CARD",
         title="학생증 잃어버림",
         features="파란색 학교 로고",
     )
     create_found(
         client,
-        finder_token,
+        user_b_token,
         category="WALLET",
         title="학생증처럼 생긴 카드지갑 주움",
         features="파란색 학교 로고",
     )
-    assert get_lost_matches(client, card_lost["id"], owner_token) == []
+    assert get_lost_matches(client, card_lost["id"], user_a_token) == []
 
     card_found = create_found(
         client,
-        finder_token,
+        user_b_token,
         category="CARD",
         title="학생증 주움",
         features="파란색 학교 로고",
     )
-    items = get_lost_matches(client, card_lost["id"], owner_token)
+    items = get_lost_matches(client, card_lost["id"], user_a_token)
     assert {item["foundPostId"] for item in items} == {card_found["id"]}
 
 
-def test_claim_verify_and_admin_handover(client, admin):
-    owner_token, finder_token = create_users(client)
-    admin_token = login(client, "admin@example.com", "AdminPass123!")
-    lost, found = create_matching_posts(client, owner_token, finder_token)
-    match = get_lost_matches(client, lost["id"], owner_token)[0]
+def test_claim_verify_and_found_author_handover(client):
+    user_a_token, user_b_token = create_users(client)
+    lost, found = create_matching_posts(client, user_a_token, user_b_token)
+    match = get_lost_matches(client, lost["id"], user_a_token)[0]
 
     claim = client.post(
         f"/api/v1/matches/{match['id']}/claims",
         json={"answer": "흰색 별 모양", "message": "제 물건 같습니다."},
-        headers=auth(owner_token),
+        headers=auth(user_a_token),
     )
     assert claim.status_code == 200
     assert claim.get_json()["data"]["status"] == "CLAIM_REQUESTED"
 
     public_listing = client.get("/api/v1/found-posts?status=CLAIMED")
-    assert found["id"] not in {
-        item["id"] for item in public_listing.get_json()["data"]["items"]
-    }
-    admin_listing = client.get(
-        "/api/v1/found-posts?status=CLAIMED",
-        headers=auth(admin_token),
-    )
-    assert found["id"] in {item["id"] for item in admin_listing.get_json()["data"]["items"]}
-
+    assert found["id"] not in {item["id"] for item in public_listing.get_json()["data"]["items"]}
     verified = client.patch(
         f"/api/v1/matches/{match['id']}/verify",
-        headers=auth(finder_token),
+        headers=auth(user_b_token),
     )
     assert verified.status_code == 200
     assert verified.get_json()["data"]["status"] == "VERIFIED"
 
+    denied_handover = client.patch(
+        f"/api/v1/matches/{match['id']}/handover",
+        headers=auth(user_a_token),
+    )
+    assert denied_handover.status_code == 403
+
     handed_over = client.patch(
         f"/api/v1/matches/{match['id']}/handover",
-        headers=auth(admin_token),
+        headers=auth(user_b_token),
     )
     assert handed_over.status_code == 200
     data = handed_over.get_json()["data"]
@@ -257,11 +270,11 @@ def test_image_upload_requires_jwt_and_writes_to_storage(client):
 
 
 def test_public_lists_filter_by_exact_category_tag(client):
-    owner_token, finder_token = create_users(client)
-    create_lost(client, owner_token, category="CARD", title="학생증 분실")
-    create_lost(client, owner_token, category="WALLET", title="지갑 분실")
-    create_found(client, finder_token, category="CARD", title="학생증 습득")
-    create_found(client, finder_token, category="WALLET", title="지갑 습득")
+    user_a_token, user_b_token = create_users(client)
+    create_lost(client, user_a_token, category="CARD", title="학생증 분실")
+    create_lost(client, user_a_token, category="WALLET", title="지갑 분실")
+    create_found(client, user_b_token, category="CARD", title="학생증 습득")
+    create_found(client, user_b_token, category="WALLET", title="지갑 습득")
 
     lost_items = client.get("/api/v1/lost-posts?category=CARD").get_json()["data"]["items"]
     found_items = client.get("/api/v1/found-posts?category=CARD").get_json()["data"]["items"]

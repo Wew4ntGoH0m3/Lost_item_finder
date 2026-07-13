@@ -7,7 +7,7 @@ from ..models import LostPost
 from ..utils import (
     body,
     current_user,
-    is_owner_or_admin,
+    is_owner,
     page_args,
     parse_category,
     parse_datetime,
@@ -44,7 +44,7 @@ def create_lost_post():
     payload = body()
     require_fields(payload, REQUIRED)
     site_code = str(payload["siteCode"]).strip().upper()
-    if user.role != "ADMIN" and site_code != user.site_code:
+    if site_code != user.site_code:
         raise ApiError("FORBIDDEN", "소속 시설에만 게시글을 등록할 수 있습니다.", 403)
 
     post = LostPost(
@@ -107,7 +107,7 @@ def get_lost_post(post_id):
     post = db.session.get(LostPost, post_id)
     if not post:
         raise ApiError("LOST_POST_NOT_FOUND", "분실글을 찾을 수 없습니다.", 404)
-    include_private = bool(user and is_owner_or_admin(user, post.user_id))
+    include_private = bool(user and is_owner(user, post.user_id))
     return success(post.to_dict(include_private=include_private))
 
 
@@ -118,7 +118,7 @@ def update_lost_post(post_id):
     post = db.session.get(LostPost, post_id)
     if not post:
         raise ApiError("LOST_POST_NOT_FOUND", "분실글을 찾을 수 없습니다.", 404)
-    if not is_owner_or_admin(user, post.user_id):
+    if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "게시글 수정 권한이 없습니다.", 403)
     payload = body()
     needs_analysis = False
@@ -152,7 +152,7 @@ def delete_lost_post(post_id):
     post = db.session.get(LostPost, post_id)
     if not post:
         raise ApiError("LOST_POST_NOT_FOUND", "분실글을 찾을 수 없습니다.", 404)
-    if not is_owner_or_admin(user, post.user_id):
+    if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "게시글 삭제 권한이 없습니다.", 403)
     if post.status == "MATCHED":
         raise ApiError("INVALID_STATUS_TRANSITION", "매칭 처리 중인 글은 삭제할 수 없습니다.", 409)
@@ -168,7 +168,7 @@ def reanalyze(post_id):
     post = db.session.get(LostPost, post_id)
     if not post:
         raise ApiError("LOST_POST_NOT_FOUND", "분실글을 찾을 수 없습니다.", 404)
-    if not is_owner_or_admin(user, post.user_id):
+    if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "분석 요청 권한이 없습니다.", 403)
     if post.status != "OPEN":
         raise ApiError("INVALID_STATUS_TRANSITION", "OPEN 상태만 분석할 수 있습니다.", 409)

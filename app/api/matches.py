@@ -5,7 +5,7 @@ from ..errors import ApiError
 from ..extensions import db
 from ..models import FoundPost, LostPost, Match, utcnow
 from ..services.chat import ensure_chat_room
-from ..utils import body, current_user, is_owner_or_admin, require_fields, success
+from ..utils import body, current_user, is_owner, require_fields, success
 
 bp = Blueprint("matches", __name__)
 
@@ -18,7 +18,7 @@ def _get_match_for_update(match_id: int) -> Match:
 
 
 def _can_access(user, match: Match) -> bool:
-    return user.role == "ADMIN" or user.id in {
+    return user.id in {
         match.lost_post.user_id,
         match.found_post.user_id,
     }
@@ -31,7 +31,7 @@ def matches_for_lost(lost_post_id):
     post = db.session.get(LostPost, lost_post_id)
     if not post:
         raise ApiError("LOST_POST_NOT_FOUND", "분실글을 찾을 수 없습니다.", 404)
-    if not is_owner_or_admin(user, post.user_id):
+    if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "매칭 후보 조회 권한이 없습니다.", 403)
     items = list(
         db.session.scalars(
@@ -50,7 +50,7 @@ def matches_for_found(found_post_id):
     post = db.session.get(FoundPost, found_post_id)
     if not post:
         raise ApiError("FOUND_POST_NOT_FOUND", "습득글을 찾을 수 없습니다.", 404)
-    if not is_owner_or_admin(user, post.user_id):
+    if not is_owner(user, post.user_id):
         raise ApiError("FORBIDDEN", "매칭 후보 조회 권한이 없습니다.", 403)
     items = list(
         db.session.scalars(
@@ -102,8 +102,8 @@ def claim_match(match_id):
 def verify_match(match_id):
     user = current_user()
     match = _get_match_for_update(match_id)
-    if user.role != "ADMIN" and user.id != match.found_post.user_id:
-        raise ApiError("FORBIDDEN", "습득자 또는 관리자만 확인할 수 있습니다.", 403)
+    if user.id != match.found_post.user_id:
+        raise ApiError("FORBIDDEN", "습득글 작성자만 확인할 수 있습니다.", 403)
     if match.status != "CLAIM_REQUESTED":
         raise ApiError("INVALID_STATUS_TRANSITION", "확인 요청 상태가 아닙니다.", 409)
     match.status = "VERIFIED"
@@ -145,9 +145,9 @@ def reject_match(match_id):
 @jwt_required()
 def handover_match(match_id):
     user = current_user()
-    if user.role != "ADMIN":
-        raise ApiError("FORBIDDEN", "관리자만 인계 완료할 수 있습니다.", 403)
     match = _get_match_for_update(match_id)
+    if user.id != match.found_post.user_id:
+        raise ApiError("FORBIDDEN", "습득글 작성자만 인계 완료할 수 있습니다.", 403)
     if match.status != "VERIFIED":
         raise ApiError("INVALID_STATUS_TRANSITION", "본인 확인 후 인계할 수 있습니다.", 409)
     match.status = "HANDED_OVER"

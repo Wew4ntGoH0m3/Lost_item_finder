@@ -6,6 +6,7 @@
 |---|---|
 | 핵심 기능 | 분실글과 습득글을 같은 카테고리 태그로 먼저 좁힌 뒤 AI로 비교 |
 | 인증 | 로그인과 Access/Refresh JWT 유지 |
+| 사용자 유형 | 단일 `User`, `role` 및 관리자 없음 |
 | 회원가입 | API는 유지하되 모바일 앱에는 화면을 만들지 않고 Postman에서 테스트 계정 생성 |
 | 카테고리 | 별도 테이블 없이 공통 `ItemCategory` Enum 태그 사용 |
 | 데이터베이스 | PostgreSQL 16, SQLAlchemy, Alembic |
@@ -24,10 +25,11 @@
 | 항목 | 적용 내용 | 목적 |
 |---|---|---|
 | 회원가입 UI | 모바일 앱 범위에서 제외 | 해커톤 핵심 화면과 개발 시간에 집중 |
-| 로그인·JWT | 기존 기능 유지 | 게시글 소유권, 비공개 특징, 수령·관리자 권한 보호 |
+| 로그인·JWT | 기존 기능 유지 | 게시글 작성자 권한과 비공개 특징 보호 |
+| 사용자 구분 | 모든 계정은 동일한 일반 사용자 | 한 사용자가 분실글·습득글 모두 작성 가능 |
 | 회원가입 API | `POST /api/v1/auth/signup` 유지 | Postman에서 시연 계정을 사전 생성 |
 | 자유 문자열 카테고리 | `ItemCategory` Enum으로 제한 | 오타와 표현 차이 방지 |
-| 전체 후보 조회 | 동일 시설·동일 태그·상태·시간 조건 SQL 선필터 | 다른 물건 혼입 및 LLM 입력량 감소 |
+| 전체 후보 조회 | 동일 시설·동일 태그·다른 작성자·상태·시간 조건 SQL 선필터 | 자기 게시글과 다른 물건 혼입 및 LLM 입력량 감소 |
 | AI | Ollama `qwen3:4b` 사용 | 별도 외부 API 키 없이 시연 |
 | 채팅 | 수령 요청 후 당사자 전용 Socket.IO 방 생성 | 앱 내 연락과 대화 내역 보존 |
 
@@ -41,7 +43,13 @@
 4. 로그인 후 받은 Access Token으로 보호 API를 호출한다.
 5. Access Token 만료 시 Refresh Token으로 갱신한다.
 
-실제 운영 서비스로 전환할 때는 초대 코드, 관리자 계정 생성, 회원가입 차단 설정 등을 별도로 추가한다.
+실제 운영 서비스로 전환할 때는 초대 코드나 회원가입 차단 설정 등을 별도로 추가한다.
+
+### 단일 사용자 원칙
+
+`User`에는 `role` 컬럼이 없으며 관리자, 분실자, 습득자 계정 종류를 구분하지 않는다. 모든 사용자는 `POST /lost-posts`와 `POST /found-posts`를 모두 호출할 수 있다.
+
+명세에서 사용하는 “분실글 작성자”와 “습득글 작성자”는 고정 역할이 아니다. 특정 Match에 연결된 두 게시글의 `user_id`를 뜻하며, 같은 사용자가 상황에 따라 양쪽 게시글을 작성할 수 있다.
 
 ## 3. 시스템 구성
 
@@ -102,7 +110,6 @@ Flask API :8000
 | `email` | VARCHAR(255) | Y | 로그인 ID, UNIQUE |
 | `password_hash` | VARCHAR(255) | Y | 해시 비밀번호 |
 | `nickname` | VARCHAR(20) | Y | 표시 이름 |
-| `role` | VARCHAR(20) | Y | `USER`, `ADMIN` |
 | `site_code` | VARCHAR(50) | Y | 소속 학교·행사장 |
 | `profile_image_url` | VARCHAR(500) | N | 프로필 이미지 |
 | `platform` | VARCHAR(20) | N | `ANDROID`, `IOS` |
@@ -124,7 +131,7 @@ Flask API :8000
 | `location` | VARCHAR(100) | Y | 분실 위치 |
 | `lost_at` | DATETIME | Y | 분실 추정 시각 |
 | `features` | TEXT | Y | 공개 특징 |
-| `private_feature` | TEXT | N | 작성자·관리자에게만 반환 |
+| `private_feature` | TEXT | N | 작성자에게만 반환 |
 | `description` | TEXT | N | 추가 설명 |
 | `image_url` | VARCHAR(500) | N | 이미지 URL |
 | `contact_method` | VARCHAR(20) | Y | 연락 방식 |
@@ -147,9 +154,9 @@ ON lost_posts (site_code, status, category, lost_at);
 | `color` | VARCHAR(30) | Y | 대표 색상 |
 | `location` | VARCHAR(100) | Y | 발견 위치 |
 | `found_at` | DATETIME | Y | 발견 시각 |
-| `storage_location` | VARCHAR(100) | Y | 보관 위치, 작성자·관리자에게 반환 |
+| `storage_location` | VARCHAR(100) | Y | 보관 위치, 작성자에게 반환 |
 | `features` | TEXT | Y | 공개 특징 |
-| `private_feature` | TEXT | N | 작성자·관리자에게만 반환 |
+| `private_feature` | TEXT | N | 작성자에게만 반환 |
 | `verification_question` | VARCHAR(255) | N | 본인 확인 질문 |
 | `description` | TEXT | N | 추가 설명 |
 | `image_url` | VARCHAR(500) | N | 이미지 URL |
@@ -178,7 +185,7 @@ ON found_posts (site_code, status, category, found_at);
 | `status` | VARCHAR(30) | Y | 매칭·인계 상태 |
 | `claim_answer` | TEXT | N | 본인 확인 답변 |
 | `claim_message` | VARCHAR(500) | N | 수령 요청 메시지 |
-| `confirmed_by` | BIGINT | N | 확인한 습득자 또는 관리자 |
+| `confirmed_by` | BIGINT | N | 확인한 습득글 작성자 |
 | `confirmed_at` | DATETIME | N | 확인 시각 |
 | `rejection_reason` | VARCHAR(500) | N | 거절 사유 |
 | `handed_over_at` | DATETIME | N | 인계 완료 시각 |
@@ -206,7 +213,7 @@ ON found_posts (site_code, status, category, found_at);
 | `last_read_message_id` | BIGINT | N | 안 읽은 메시지 계산 커서 |
 | `last_read_at` | DATETIME | N | 마지막 읽음 시각 표시 |
 
-`UNIQUE(room_id, user_id)`로 중복 참여자를 막는다. 관리자도 인계 권한만 가지며 채팅 내용을 조회하지 않는다.
+`UNIQUE(room_id, user_id)`로 중복 참여자를 막는다. 채팅 참여자는 해당 Match의 분실글 작성자와 습득글 작성자로만 구성한다.
 
 ### 5.7 ChatMessage
 
@@ -292,14 +299,14 @@ Content-Type: application/json
 
 ```json
 {
-  "email": "owner@example.com",
+  "email": "user-a@example.com",
   "password": "StrongPass123!",
-  "nickname": "분실자",
+  "nickname": "사용자A",
   "siteCode": "SCHOOL_001"
 }
 ```
 
-발표 전에 분실자와 습득자 계정을 각각 만든다. 모바일 앱에서는 이 API를 호출하지 않는다.
+발표 전에 일반 사용자 계정 A와 B를 만든다. 두 계정의 데이터 구조와 권한 종류는 같으며, 모바일 앱에서는 이 API를 호출하지 않는다.
 
 ### 8.2 앱 로그인
 
@@ -345,9 +352,9 @@ Authorization: Bearer {accessToken}
 | POST | `/lost-posts` | JWT | 등록·자동 분석 예약 |
 | GET | `/lost-posts` | 공개 | 목록·태그 검색 |
 | GET | `/lost-posts/{id}` | 공개 | 상세, 작성자는 비공개 특징 포함 |
-| PATCH | `/lost-posts/{id}` | 작성자·관리자 | 수정·재분석 |
-| DELETE | `/lost-posts/{id}` | 작성자·관리자 | 삭제 |
-| POST | `/lost-posts/{id}/matches/analyze` | 작성자·관리자 | 수동 재분석 |
+| PATCH | `/lost-posts/{id}` | 작성자 | 수정·재분석 |
+| DELETE | `/lost-posts/{id}` | 작성자 | 삭제 |
+| POST | `/lost-posts/{id}/matches/analyze` | 작성자 | 수동 재분석 |
 
 ### 습득글
 
@@ -356,20 +363,20 @@ Authorization: Bearer {accessToken}
 | POST | `/found-posts` | JWT | 등록·자동 분석 예약 |
 | GET | `/found-posts` | 공개 | 기본 `STORED` 목록·태그 검색 |
 | GET | `/found-posts/{id}` | 공개 | 상세, 작성자는 비공개 정보 포함 |
-| PATCH | `/found-posts/{id}` | 작성자·관리자 | 수정·재분석 |
-| DELETE | `/found-posts/{id}` | 작성자·관리자 | 삭제 |
+| PATCH | `/found-posts/{id}` | 작성자 | 수정·재분석 |
+| DELETE | `/found-posts/{id}` | 작성자 | 삭제 |
 
 ### 매칭·인계
 
 | Method | URL | 권한 | 기능 |
 |---|---|---|---|
-| GET | `/matches/lost-posts/{id}` | 분실글 작성자·관리자 | 후보 조회 |
-| GET | `/matches/found-posts/{id}` | 습득글 작성자·관리자 | 후보 조회 |
-| GET | `/matches/{id}` | 양쪽 작성자·관리자 | 상세 점수·이유 |
+| GET | `/matches/lost-posts/{id}` | 분실글 작성자 | 후보 조회 |
+| GET | `/matches/found-posts/{id}` | 습득글 작성자 | 후보 조회 |
+| GET | `/matches/{id}` | 양쪽 게시글 작성자 | 상세 점수·이유 |
 | POST | `/matches/{id}/claims` | 분실글 작성자 | 내 물건 요청 |
-| PATCH | `/matches/{id}/verify` | 습득자·관리자 | 답변 확인 |
-| PATCH | `/matches/{id}/reject` | 양쪽 작성자·관리자 | 거절 |
-| PATCH | `/matches/{id}/handover` | 관리자 | 인계 완료 |
+| PATCH | `/matches/{id}/verify` | 습득글 작성자 | 답변 확인 |
+| PATCH | `/matches/{id}/reject` | 양쪽 게시글 작성자 | 거절 |
+| PATCH | `/matches/{id}/handover` | 습득글 작성자 | 인계 완료 |
 
 ### 채팅
 
@@ -478,9 +485,9 @@ const socket = io("http://13.124.179.95", {
 |---|---|---|---|
 | 후보 생성 | `CANDIDATE` | `OPEN` | `STORED` |
 | 내 물건 요청 | `CLAIM_REQUESTED` | `MATCHED` | `CLAIMED` |
-| 습득자 확인 | `VERIFIED` | `MATCHED` | `CLAIMED` |
+| 습득글 작성자 확인 | `VERIFIED` | `MATCHED` | `CLAIMED` |
 | 거절 | `REJECTED` | `OPEN` | `STORED` |
-| 관리자 인계 | `HANDED_OVER` | `RETURNED` | `RETURNED` |
+| 습득글 작성자 인계 | `HANDED_OVER` | `RETURNED` | `RETURNED` |
 
 채팅은 `CLAIM_REQUESTED`에서 생성되고 `VERIFIED`까지 송신 가능하다. 거절·인계 후에도 기록은 남지만 송신은 닫힌다.
 
@@ -497,7 +504,7 @@ const socket = io("http://13.124.179.95", {
 |---:|---|---|
 | 400 | `VALIDATION_FAILED` | JSON 또는 필수값 오류 |
 | 401 | `UNAUTHORIZED` | JWT 없음·만료·잘못된 로그인 |
-| 403 | `FORBIDDEN` | 소유권 또는 역할 부족 |
+| 403 | `FORBIDDEN` | 해당 게시글 작성자 또는 매칭 참여자가 아님 |
 | 404 | `LOST_POST_NOT_FOUND` | 분실글 없음 |
 | 404 | `FOUND_POST_NOT_FOUND` | 습득글 없음 |
 | 404 | `MATCH_NOT_FOUND` | 매칭 없음 |
@@ -539,18 +546,20 @@ API는 WebSocket 연결 유지를 위해 Gunicorn 1 worker·thread 모드로 실
 
 ## 16. 해커톤 시연 순서
 
-1. Postman으로 분실자·습득자 계정을 회원가입한다.
+1. Postman으로 동일한 유형의 일반 사용자 계정 A와 B를 만든다.
 2. 앱에서 두 계정으로 로그인해 JWT를 받는다.
 3. `CARD` 태그 학생증 습득글과 `WALLET` 태그 유사 글을 등록한다.
 4. `CARD` 태그 학생증 분실글을 등록한다.
 5. 같은 `CARD` 습득글만 후보가 된 결과와 AI 이유를 보여준다.
-6. 분실자가 수령 요청하면 채팅방이 자동 생성되는 것을 보여준다.
+6. 분실글 작성자가 수령 요청하면 채팅방이 자동 생성되는 것을 보여준다.
 7. 두 앱에서 Socket.IO 메시지와 읽음 상태가 실시간으로 반영되는 것을 보여준다.
-8. 습득자가 확인하고 관리자 계정으로 인계 완료 상태를 보여준다.
+8. 습득글 작성자가 확인하고 인계 완료 상태를 보여준다.
 
 ## 17. 완료 조건
 
-- 로그인, Access/Refresh JWT, 소유권·관리자 검사가 유지된다.
+- 사용자 유형은 하나이며 `role`과 관리자 계정이 없다.
+- 동일한 사용자가 분실글과 습득글을 모두 작성할 수 있다.
+- 로그인, Access/Refresh JWT, 게시글 작성자 검사가 유지된다.
 - 회원가입 API는 Postman 테스트 계정 생성용으로 문서화된다.
 - 모바일 앱 기능 범위에는 회원가입 화면이 없다.
 - 두 게시글이 같은 `ItemCategory` Enum을 사용한다.

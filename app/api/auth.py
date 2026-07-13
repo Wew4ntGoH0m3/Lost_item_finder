@@ -46,7 +46,6 @@ def signup():
         password_hash=generate_password_hash(password),
         nickname=nickname,
         site_code=site_code,
-        role="USER",
     )
     db.session.add(user)
     db.session.commit()

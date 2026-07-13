@@ -258,7 +258,7 @@ def test_ollama_analyzes_image_for_category_and_content(monkeypatch, app):
     assert json.loads(captured["body"]["messages"][1]["content"]) == {"sourceFacts": facts}
 
 
-def test_found_image_content_falls_back_on_invalid_category(monkeypatch, app):
+def test_found_image_content_defaults_category_but_keeps_llm_text(monkeypatch, app):
     result_body = {
         "category": "SHOE",
         "color": "BROWN",
@@ -297,6 +297,7 @@ def test_found_image_content_falls_back_on_invalid_category(monkeypatch, app):
     with app.app_context():
         content, generator = generate_found_post_content_from_image(b"raw-image-bytes", facts)
 
-    assert generator == "grounded-template-v1"
+    assert generator == "ollama-vision:qwen3-vl:4b"
     assert content["category"] is ItemCategory.ETC
-    assert content["color"] == "UNKNOWN"
+    assert content["title"] == result_body["title"]
+    assert content["color"] == "BROWN"

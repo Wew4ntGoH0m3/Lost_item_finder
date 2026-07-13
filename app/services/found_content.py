@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import re
 from datetime import datetime, timezone
 
 import httpx
@@ -93,18 +92,15 @@ def _strip_code_fence(content: str) -> str:
 
 
 def _validate_generated_content(raw, facts: dict[str, str]) -> dict[str, str] | None:
-    if not isinstance(raw, dict) or set(raw) != {"title", "features", "description"}:
-        return None
-    if not all(isinstance(raw[field], str) for field in raw):
+    if not isinstance(raw, dict):
         return None
 
-    content = {field: raw[field].strip() for field in raw}
-    if not content["title"] or len(content["title"]) > 100:
-        return None
-    if not content["features"] or len(content["features"]) > 2000:
-        return None
-    if not content["description"] or len(content["description"]) > 2000:
-        return None
+    fallback = _grounded_template(facts)
+    content = {}
+    for field, limit in (("title", 100), ("features", 2000), ("description", 2000)):
+        value = raw.get(field)
+        text = str(value).strip() if value is not None else ""
+        content[field] = text[:limit] if text else fallback[field]
     return content
 
 
@@ -178,33 +174,23 @@ def _grounded_image_template(facts: dict[str, str]) -> dict:
 
 
 def _validate_generated_image_content(raw, facts: dict[str, str]) -> dict | None:
-    if not isinstance(raw, dict) or set(raw) != {
-        "category",
-        "color",
-        "title",
-        "features",
-        "description",
-    }:
+    if not isinstance(raw, dict):
         return None
-    if not all(isinstance(raw[field], str) for field in raw):
-        return None
+
+    fallback = _grounded_image_template(facts)
 
     try:
-        category = ItemCategory(raw["category"].strip().upper())
+        category = ItemCategory(str(raw.get("category", "")).strip().upper())
     except ValueError:
-        return None
+        category = fallback["category"]
 
-    color = raw["color"].strip().upper()
-    if not color or len(color) > 30 or not re.fullmatch(r"[0-9A-Z가-힣 ]+", color):
-        return None
+    color = str(raw.get("color") or "").strip().upper()[:30] or fallback["color"]
 
-    text_fields = {field: raw[field].strip() for field in ("title", "features", "description")}
-    if not text_fields["title"] or len(text_fields["title"]) > 100:
-        return None
-    if not text_fields["features"] or len(text_fields["features"]) > 2000:
-        return None
-    if not text_fields["description"] or len(text_fields["description"]) > 2000:
-        return None
+    text_fields = {}
+    for field, limit in (("title", 100), ("features", 2000), ("description", 2000)):
+        value = raw.get(field)
+        text = str(value).strip() if value is not None else ""
+        text_fields[field] = text[:limit] if text else fallback[field]
 
     return {"category": category, "color": color, **text_fields}
 
